@@ -8,8 +8,10 @@ const App = {
   visiblePasswords: new Set(), // sessie-only: welke wachtwoorden op tabblad Projecten getoond worden
 
   init() {
+    applyDocumentDirection(getLang());
     Store.init();
     this.bindGlobalEvents();
+    this.renderLangPicker();
     this.render();
   },
 
@@ -26,6 +28,11 @@ const App = {
       this.render();
     });
 
+    document.getElementById("langPicker").addEventListener("change", (e) => {
+      setLang(e.target.value);
+      this.render();
+    });
+
     document.body.addEventListener("click", (e) => this.handleClick(e));
     document.body.addEventListener("change", (e) => this.handleChange(e));
     document.body.addEventListener("input", (e) => this.handleInput(e));
@@ -35,7 +42,22 @@ const App = {
     return !!(project && project.password && !this.unlockedProjects.has(project.id));
   },
 
+  renderLangPicker() {
+    const sel = document.getElementById("langPicker");
+    const current = getLang();
+    sel.innerHTML = Object.keys(LANGUAGES).map(code =>
+      `<option value="${code}" ${code === current ? "selected" : ""}>${LANGUAGES[code].name}</option>`
+    ).join("");
+  },
+
+  applyStaticTranslations() {
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      el.innerHTML = t(el.dataset.i18n);
+    });
+  },
+
   render() {
+    this.applyStaticTranslations();
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === this.tab));
     document.querySelectorAll(".tab-view").forEach(v => v.classList.add("hidden"));
 
@@ -95,7 +117,7 @@ const App = {
         break;
       }
       case "remove-line":
-        if (confirm("Deze regel verwijderen?")) { Store.removeLine(el.dataset.lineId); this.render(); }
+        if (confirm(t("confirm.removeLine"))) { Store.removeLine(el.dataset.lineId); this.render(); }
         break;
 
       case "add-catalog-item": {
@@ -110,19 +132,19 @@ const App = {
         break;
       }
       case "remove-catalog-item":
-        if (confirm("Dit catalogusitem verwijderen? Bestaande projectregels blijven hun laatst bekende prijs behouden.")) {
+        if (confirm(t("confirm.removeCatalogItem"))) {
           Store.removeCatalogItem(el.dataset.code); this.render();
         }
         break;
 
       case "add-subheader": {
         const category = el.dataset.category;
-        const name = prompt("Naam van de nieuwe subcategorie:");
+        const name = prompt(t("prompt.newSubheader"));
         if (name && name.trim()) { Store.addSubheader(category, name.trim()); this.render(); }
         break;
       }
       case "add-category": {
-        const name = prompt("Naam van de nieuwe hoofdcategorie:");
+        const name = prompt(t("prompt.newCategory"));
         if (name && name.trim()) { Store.addCategory(name.trim()); this.render(); }
         break;
       }
@@ -149,8 +171,8 @@ const App = {
         // waarden bewaren in modal-state zodat een her-render (bij validatiefout) ze niet wist
         this.modal.name = name;
         this.modal.password = password;
-        if (!name) { this.modal.error = "Vul een projectnaam in."; this.render(); return; }
-        if (!password) { this.modal.error = "Vul een wachtwoord in."; this.render(); return; }
+        if (!name) { this.modal.error = t("modal.errorName"); this.render(); return; }
+        if (!password) { this.modal.error = t("modal.errorPassword"); this.render(); return; }
         const proj = Store.createProject(name, { password, logoDataUrl: this.modal.logoDataUrl || null });
         Store.setActiveProject(proj.id);
         this.unlockedProjects.add(proj.id); // aanmaker hoeft niet direct opnieuw in te loggen
@@ -171,7 +193,7 @@ const App = {
         this.render();
         break;
       case "delete-project":
-        if (confirm("Dit project definitief verwijderen? Dit kan niet ongedaan gemaakt worden.")) {
+        if (confirm(t("confirm.deleteProject"))) {
           Store.deleteProject(el.dataset.id);
           this.render();
         }
@@ -199,7 +221,7 @@ const App = {
       case "change-password": {
         const id = el.dataset.id;
         const proj = Store.state.projects[id];
-        const next = prompt(`Wachtwoord voor '${proj.name}':`, proj.password || "");
+        const next = prompt(t("prompt.passwordFor", { name: proj.name }), proj.password || "");
         if (next !== null) {
           Store.updateProject(id, { password: next.trim() });
           this.render();
@@ -326,7 +348,7 @@ const App = {
     }
     if (e.target.id === "importBackupFile") {
       readJSONFile(e.target.files[0], (data) => {
-        if (confirm("Dit vervangt alle lokale projecten en eenheidsprijzen door de inhoud van dit back-upbestand. Doorgaan?")) {
+        if (confirm(t("confirm.importBackup"))) {
           Store.importAll(data);
           this.render();
         }
@@ -354,7 +376,7 @@ const App = {
         img.style.transform = `translate(${proj.logoOffsetX || 0}px, ${proj.logoOffsetY || 0}px) scale(${scale})`;
       }
       const label = document.getElementById("logoScaleLabel");
-      if (label) label.textContent = `Grootte van het logo (${Math.round(scale * 100)}%)`;
+      if (label) label.textContent = t("report.logoScaleLabel", { pct: Math.round(scale * 100) });
       return;
     }
   },
@@ -383,7 +405,7 @@ function readJSONFile(file, cb) {
   const reader = new FileReader();
   reader.onload = () => {
     try { cb(JSON.parse(reader.result)); }
-    catch (e) { alert("Kon dit bestand niet lezen: geen geldig JSON-bestand."); }
+    catch (e) { alert(t("alert.badJson")); }
   };
   reader.readAsText(file);
 }
@@ -407,10 +429,10 @@ function resizeImageFile(file, maxDim, quality, cb) {
       ctx.drawImage(img, 0, 0, width, height);
       cb(canvas.toDataURL("image/jpeg", quality));
     };
-    img.onerror = () => alert("Kon deze afbeelding niet laden.");
+    img.onerror = () => alert(t("alert.imageLoadFail"));
     img.src = reader.result;
   };
-  reader.onerror = () => alert("Kon dit bestand niet lezen.");
+  reader.onerror = () => alert(t("alert.fileReadFail"));
   reader.readAsDataURL(file);
 }
 

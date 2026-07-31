@@ -11,6 +11,11 @@ succesvolle deploy is de tool bereikbaar op:
 
 ## Wat kan de tool
 
+- **Meertalig**: Nederlands (standaard), Engels, Duits, Frans, Russisch, Thai en Arabisch
+  (met rechts-naar-links-opmaak), te kiezen via het taalmenu rechtsboven. Vertaald is de
+  interface (knoppen, labels, meldingen); categorieën, subcategorieën en
+  catalogusomschrijvingen blijven bewust in het Engels, omdat dit vaktermen uit de
+  bouw-/inrichtingswereld zijn.
 - **Budget-tabblad staat altijd volledig uitgeklapt**: alle standaard posten (89 items
   uit de catalogus, per hoofd- en subcategorie) staan al klaar — je vult alleen de
   hoeveelheid in. Per subcategorie kun je daarnaast losse, eigen (niet-standaard)

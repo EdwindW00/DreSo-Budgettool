@@ -21,13 +21,14 @@
           </div>
         </div>
         <nav class="tabs" id="tabs">
-          <button class="tab-btn" data-tab="dashboard">Dashboard</button>
-          <button class="tab-btn" data-tab="budget">Budget</button>
-          <button class="tab-btn" data-tab="prices">Eenheidsprijzen</button>
-          <button class="tab-btn" data-tab="projects">Projecten</button>
-          <button class="tab-btn" data-tab="report">Rapport</button>
+          <button class="tab-btn" data-tab="dashboard" data-i18n="tab.dashboard">Dashboard</button>
+          <button class="tab-btn" data-tab="budget" data-i18n="tab.budget">Budget</button>
+          <button class="tab-btn" data-tab="prices" data-i18n="tab.prices">Eenheidsprijzen</button>
+          <button class="tab-btn" data-tab="projects" data-i18n="tab.projects">Projecten</button>
+          <button class="tab-btn" data-tab="report" data-i18n="tab.report">Rapport</button>
         </nav>
         <div class="topbar-right">
+          <select id="langPicker" class="project-picker lang-picker" aria-label="Language / Taal"></select>
           <select id="projectPicker" class="project-picker"></select>
         </div>
       </div>
@@ -42,7 +43,7 @@
       <section id="view-locked" class="tab-view"></section>
     </main>
 
-    <footer class="app-footer no-print">
+    <footer class="app-footer no-print" data-i18n="footer.text">
       DreSo Budgettool &middot; alle gegevens worden lokaal in je browser opgeslagen &middot; gebruik Projecten &rarr; Exporteren om te back-uppen of te delen.
     </footer>
   </div>
@@ -50,6 +51,7 @@
 
 <div id="modalRoot" class="hidden no-print"></div>
 
+<script src="assets/js/i18n.js"></script>
 <script src="assets/js/data.js"></script>
 <script src="assets/js/store.js"></script>
 <script src="assets/js/charts.js"></script>
