@@ -6,6 +6,12 @@
 <title>DreSo Budgettool — Drees & Sommer</title>
 <meta name="description" content="Professionele budgettool voor interieur- en verbouwingsprojecten van Drees & Sommer.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%230f1c4a%22/><text x=%2216%22 y=%2222%22 font-size=%2216%22 font-family=%22Arial%22 font-weight=%22800%22 fill=%22white%22 text-anchor=%22middle%22>DS</text></svg>">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#0f1c4a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DreSo Budget">
 <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
@@ -28,6 +34,7 @@
           <button class="tab-btn" data-tab="report" data-i18n="tab.report">Rapport</button>
         </nav>
         <div class="topbar-right">
+          <button id="installBtn" class="btn btn-ghost hidden" data-i18n="app.install">App installeren</button>
           <select id="langPicker" class="project-picker lang-picker" aria-label="Language / Taal"></select>
           <select id="projectPicker" class="project-picker"></select>
         </div>

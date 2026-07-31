@@ -1,0 +1,16 @@
+{
+  "name": "DreSo Budgettool",
+  "short_name": "DreSo Budget",
+  "description": "Professionele budgettool voor interieur- en verbouwingsprojecten van Drees & Sommer.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f7fb",
+  "theme_color": "#0f1c4a",
+  "lang": "nl",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

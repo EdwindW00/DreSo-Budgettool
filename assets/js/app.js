@@ -7,12 +7,31 @@ const App = {
   unlockError: false,
   visiblePasswords: new Set(), // sessie-only: welke wachtwoorden op tabblad Projecten getoond worden
 
+  deferredInstallPrompt: null,
+
   init() {
     applyDocumentDirection(getLang());
     Store.init();
     this.bindGlobalEvents();
     this.renderLangPicker();
+    this.registerServiceWorker();
     this.render();
+  },
+
+  registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    // relatief registreren, zodat dit ook onder een subpad werkt (bv. GitHub Pages)
+    navigator.serviceWorker.register("sw.js").catch((err) => console.warn("Service worker registratie mislukt:", err));
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      this.deferredInstallPrompt = e;
+      document.getElementById("installBtn").classList.remove("hidden");
+    });
+    window.addEventListener("appinstalled", () => {
+      this.deferredInstallPrompt = null;
+      document.getElementById("installBtn").classList.add("hidden");
+    });
   },
 
   bindGlobalEvents() {
@@ -31,6 +50,14 @@ const App = {
     document.getElementById("langPicker").addEventListener("change", (e) => {
       setLang(e.target.value);
       this.render();
+    });
+
+    document.getElementById("installBtn").addEventListener("click", async () => {
+      if (!this.deferredInstallPrompt) return;
+      this.deferredInstallPrompt.prompt();
+      await this.deferredInstallPrompt.userChoice;
+      this.deferredInstallPrompt = null;
+      document.getElementById("installBtn").classList.add("hidden");
     });
 
     document.body.addEventListener("click", (e) => this.handleClick(e));

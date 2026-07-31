@@ -148,6 +148,8 @@ const I18N = {
     "alert.fileReadFail": "Kon dit bestand niet lezen.",
 
     "lang.selectLabel": "Taal",
+    "app.install": "App installeren",
+    "app.installed": "App geïnstalleerd",
   },
 
   en: {
@@ -283,6 +285,8 @@ const I18N = {
     "alert.fileReadFail": "Could not read this file.",
 
     "lang.selectLabel": "Language",
+    "app.install": "Install app",
+    "app.installed": "App installed",
   },
 
   de: {
@@ -418,6 +422,8 @@ const I18N = {
     "alert.fileReadFail": "Diese Datei konnte nicht gelesen werden.",
 
     "lang.selectLabel": "Sprache",
+    "app.install": "App installieren",
+    "app.installed": "App installiert",
   },
 
   fr: {
@@ -553,6 +559,8 @@ const I18N = {
     "alert.fileReadFail": "Impossible de lire ce fichier.",
 
     "lang.selectLabel": "Langue",
+    "app.install": "Installer l'application",
+    "app.installed": "Application installée",
   },
 
   ru: {
@@ -688,6 +696,8 @@ const I18N = {
     "alert.fileReadFail": "Не удалось прочитать этот файл.",
 
     "lang.selectLabel": "Язык",
+    "app.install": "Установить приложение",
+    "app.installed": "Приложение установлено",
   },
 
   th: {
@@ -823,6 +833,8 @@ const I18N = {
     "alert.fileReadFail": "ไม่สามารถอ่านไฟล์นี้ได้",
 
     "lang.selectLabel": "ภาษา",
+    "app.install": "ติดตั้งแอป",
+    "app.installed": "ติดตั้งแอปแล้ว",
   },
 
   ar: {
@@ -958,6 +970,8 @@ const I18N = {
     "alert.fileReadFail": "تعذّرت قراءة هذا الملف.",
 
     "lang.selectLabel": "اللغة",
+    "app.install": "تثبيت التطبيق",
+    "app.installed": "تم تثبيت التطبيق",
   },
 };
 

@@ -11,6 +11,12 @@ succesvolle deploy is de tool bereikbaar op:
 
 ## Wat kan de tool
 
+- **Installeerbaar als app (PWA)**: open de site in Chrome of Edge en klik op
+  "App installeren" (rechtsboven, verschijnt zodra de browser dit toestaat) — of gebruik
+  het installatie-icoon in de adresbalk. Je krijgt dan een los venster met eigen
+  app-icoon op je bureaublad/startmenu, en de tool blijft daarna ook **offline**
+  werken (een service worker cachet de volledige applicatie; je projectdata stond
+  toch al alleen lokaal in de browser).
 - **Meertalig**: Nederlands (standaard), Engels, Duits, Frans, Russisch, Thai en Arabisch
   (met rechts-naar-links-opmaak), te kiezen via het taalmenu rechtsboven. Vertaald is de
   interface (knoppen, labels, meldingen); categorieën, subcategorieën en
