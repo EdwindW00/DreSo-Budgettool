@@ -76,6 +76,9 @@ const Store = {
       notes: "",
       password: (opts && opts.password) || "",
       logoDataUrl: (opts && opts.logoDataUrl) || null,
+      logoScale: 1,
+      logoOffsetX: 0,
+      logoOffsetY: 0,
       lines: [],
     };
     this.state.projects[id] = project;

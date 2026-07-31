@@ -222,7 +222,11 @@ const App = {
 
       // ---------- rapportlogo ----------
       case "remove-logo":
-        Store.updateActiveProject({ logoDataUrl: null });
+        Store.updateActiveProject({ logoDataUrl: null, logoScale: 1, logoOffsetX: 0, logoOffsetY: 0 });
+        this.render();
+        break;
+      case "reset-logo-position":
+        Store.updateActiveProject({ logoScale: 1, logoOffsetX: 0, logoOffsetY: 0 });
         this.render();
         break;
 
@@ -337,6 +341,21 @@ const App = {
     // that are already handled onchange, to keep focus. Only used for the search field.
     if (e.target.id === "catalogSearch") {
       renderPrices(e.target.value);
+      return;
+    }
+
+    // logogrootte op het rapport: direct live bijwerken zonder de slider zijn focus te laten verliezen
+    if (e.target.id === "logoScaleRange") {
+      const scale = Number(e.target.value) / 100;
+      Store.updateActiveProject({ logoScale: scale });
+      const img = document.getElementById("coverLogoImg");
+      if (img) {
+        const proj = Store.activeProject;
+        img.style.transform = `translate(${proj.logoOffsetX || 0}px, ${proj.logoOffsetY || 0}px) scale(${scale})`;
+      }
+      const label = document.getElementById("logoScaleLabel");
+      if (label) label.textContent = `Grootte van het logo (${Math.round(scale * 100)}%)`;
+      return;
     }
   },
 };

@@ -410,10 +410,15 @@ function renderReport(project) {
       </div>`;
   }).join("");
 
+  const logoScale = project.logoScale || 1;
+  const logoOffX = project.logoOffsetX || 0;
+  const logoOffY = project.logoOffsetY || 0;
+  const logoTransform = `translate(${logoOffX}px, ${logoOffY}px) scale(${logoScale})`;
+
   el.innerHTML = `
     <div class="panel no-print" style="margin-bottom:16px;">
       <div class="panel-head"><h2>Rapportlogo / afbeelding</h2><span class="hint">wordt gebruikt op de coverpagina hieronder</span></div>
-      <div class="panel-body" style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+      <div class="panel-body" style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
         ${project.logoDataUrl
           ? `<img src="${project.logoDataUrl}" class="logo-preview" alt="Logo">`
           : `<div class="logo-preview placeholder">Geen logo</div>`}
@@ -421,6 +426,13 @@ function renderReport(project) {
           <label class="btn btn-light btn-sm" style="cursor:pointer;">Logo uploaden<input type="file" id="reportLogoFile" accept="image/*" class="hidden"></label>
           ${project.logoDataUrl ? `<button class="btn btn-sm btn-danger" data-action="remove-logo">Verwijderen</button>` : ""}
         </div>
+        ${project.logoDataUrl ? `
+        <div class="field" style="min-width:220px;">
+          <label id="logoScaleLabel">Grootte van het logo (${Math.round(logoScale * 100)}%)</label>
+          <input type="range" min="30" max="300" step="5" id="logoScaleRange" value="${Math.round(logoScale * 100)}">
+        </div>
+        <button class="btn btn-sm btn-light" data-action="reset-logo-position">Positie &amp; grootte resetten</button>
+        <p class="small text-muted" style="width:100%; margin:0;">Sleep het logo direct op de coverpagina hieronder om het te verplaatsen.</p>` : ""}
       </div>
     </div>
     <div class="report-toolbar no-print">
@@ -429,13 +441,34 @@ function renderReport(project) {
     </div>
     <div id="report">
       <div class="report-cover">
-        <div class="rc-mark">${project.logoDataUrl ? `<img src="${project.logoDataUrl}" alt="Logo">` : "D&amp;S"}</div>
-        <h1>${escapeHTML(project.name).toUpperCase()}</h1>
-        <div class="rc-sub">Budget Estimate</div>
-        <div class="rc-meta">
-          <div>${fmtNum(project.floorArea)} m²</div>
-          <div>${project.projectDate || ""}</div>
-          <div>${escapeHTML(project.preparedBy || "Drees & Sommer")}</div>
+        <div class="cover-ruler"></div>
+        <div class="cover-headstrip">
+          <div class="cover-doclabel">Budget Estimate</div>
+          <div class="cover-docmeta">DOC ${escapeHTML((project.id || "").slice(-6).toUpperCase())} &middot; REV. A</div>
+        </div>
+        <div class="cover-corner tl"></div>
+        <div class="cover-corner tr"></div>
+        <div class="cover-corner bl"></div>
+        <div class="cover-corner br"></div>
+
+        <div class="cover-logo-zone">
+          ${project.logoDataUrl
+            ? `<img id="coverLogoImg" src="${project.logoDataUrl}" alt="Logo" style="transform:${logoTransform};">`
+            : `<div class="cover-logo-empty">+ logo toevoegen hierboven</div>`}
+        </div>
+
+        <div class="cover-titlearea">
+          <h1>${escapeHTML(project.name).toUpperCase()}</h1>
+          <div class="cover-rule"></div>
+        </div>
+
+        <div class="cover-titleblock">
+          <div class="tb-cell"><span class="tb-label">Project</span><span class="tb-value">${escapeHTML(project.name)}</span></div>
+          <div class="tb-cell"><span class="tb-label">Oppervlak</span><span class="tb-value">${fmtNum(project.floorArea)} m&sup2;</span></div>
+          <div class="tb-cell"><span class="tb-label">Datum</span><span class="tb-value">${project.projectDate || ""}</span></div>
+          <div class="tb-cell"><span class="tb-label">Opgesteld door</span><span class="tb-value">${escapeHTML(project.preparedBy || "Drees & Sommer")}</span></div>
+          <div class="tb-cell"><span class="tb-label">Document</span><span class="tb-value">Budget Estimate</span></div>
+          <div class="tb-cell"><span class="tb-label">Status</span><span class="tb-value">Concept</span></div>
         </div>
       </div>
 
@@ -462,6 +495,46 @@ function renderReport(project) {
       ${detailSections}
     </div>
   `;
+
+  bindCoverLogoDrag();
+}
+
+// sleepbaar maken van het covers-logo (grootte via de slider hierboven, positie via drag)
+function bindCoverLogoDrag() {
+  const img = document.getElementById("coverLogoImg");
+  if (!img) return;
+  let dragging = false;
+  let startX = 0, startY = 0, startOffX = 0, startOffY = 0;
+
+  const applyTransform = (offX, offY) => {
+    const scale = (Store.activeProject.logoScale || 1);
+    img.style.transform = `translate(${offX}px, ${offY}px) scale(${scale})`;
+  };
+
+  img.addEventListener("pointerdown", (e) => {
+    dragging = true;
+    img.setPointerCapture(e.pointerId);
+    img.classList.add("dragging");
+    startX = e.clientX; startY = e.clientY;
+    const proj = Store.activeProject;
+    startOffX = proj.logoOffsetX || 0;
+    startOffY = proj.logoOffsetY || 0;
+  });
+  img.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    applyTransform(startOffX + (e.clientX - startX), startOffY + (e.clientY - startY));
+  });
+  const endDrag = (e) => {
+    if (!dragging) return;
+    dragging = false;
+    img.classList.remove("dragging");
+    Store.updateActiveProject({
+      logoOffsetX: startOffX + (e.clientX - startX),
+      logoOffsetY: startOffY + (e.clientY - startY),
+    });
+  };
+  img.addEventListener("pointerup", endDrag);
+  img.addEventListener("pointercancel", endDrag);
 }
 
 function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }

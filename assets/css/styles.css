@@ -231,22 +231,69 @@ footer.app-footer{
 #report{
   background:#fff; max-width:900px; margin:0 auto; box-shadow:var(--shadow); border:1px solid var(--line);
 }
+/* Cover: technische / bouwmanagement-stijl (tekenlijnen, titelblok, liniaal) */
 .report-cover{
-  padding:70px 56px; min-height:640px; display:flex; flex-direction:column; justify-content:flex-end;
-  background:linear-gradient(160deg, var(--navy-950), var(--navy-800));
-  color:#fff; position:relative; overflow:hidden;
+  min-height:680px; position:relative; background:#fff; color:var(--navy-900);
+  margin:26px; border:1.5px solid var(--navy-900); padding-left:30px;
+  display:flex; flex-direction:column; overflow:hidden;
 }
-.report-cover::before{
-  content:""; position:absolute; inset:0;
-  background:radial-gradient(circle at 80% 10%, rgba(91,131,232,.35), transparent 55%);
+.cover-ruler{
+  position:absolute; left:0; top:0; bottom:0; width:30px;
+  background-image: repeating-linear-gradient(to bottom, var(--navy-900) 0 1px, transparent 1px 24px),
+                     repeating-linear-gradient(to bottom, var(--navy-700) 0 1px, transparent 1px 8px);
+  background-size: 100% 100%, 6px 8px;
+  background-position: left top, left top;
+  background-repeat:no-repeat, repeat-y;
+  border-right:1px solid var(--navy-900);
+  opacity:.9;
 }
-.report-cover .rc-mark{
-  position:relative; font-weight:800; letter-spacing:.5px; font-size:14px;
-  background:#fff; color:var(--navy-900); display:inline-block; padding:6px 10px; border-radius:6px; margin-bottom:26px;
+.cover-corner{position:absolute; width:16px; height:16px; z-index:2;}
+.cover-corner.tl{top:8px; left:38px; border-top:2px solid var(--navy-900); border-left:2px solid var(--navy-900);}
+.cover-corner.tr{top:8px; right:8px; border-top:2px solid var(--navy-900); border-right:2px solid var(--navy-900);}
+.cover-corner.bl{bottom:8px; left:38px; border-bottom:2px solid var(--navy-900); border-left:2px solid var(--navy-900);}
+.cover-corner.br{bottom:8px; right:8px; border-bottom:2px solid var(--navy-900); border-right:2px solid var(--navy-900);}
+
+.cover-headstrip{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:18px 28px 14px 20px; border-bottom:1px solid var(--navy-900);
+  font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--navy-800); font-weight:700;
 }
-.report-cover h1{position:relative; font-size:32px; margin:0 0 6px; letter-spacing:-.5px;}
-.report-cover .rc-sub{position:relative; font-size:15px; color:#c4cbee; margin-bottom:22px;}
-.report-cover .rc-meta{position:relative; display:flex; gap:24px; font-size:12.5px; color:#dfe4fb; border-top:1px solid rgba(255,255,255,.25); padding-top:16px;}
+.cover-docmeta{color:var(--ink-soft); font-weight:600; letter-spacing:.06em;}
+
+.cover-logo-zone{
+  flex:1; position:relative; display:flex; align-items:center; justify-content:center;
+  min-height:280px; padding:20px;
+  background-image: linear-gradient(var(--line-soft) 1px, transparent 1px), linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.cover-logo-zone img{
+  max-width:70%; max-height:260px; object-fit:contain; cursor:grab; touch-action:none;
+  filter:drop-shadow(0 8px 20px rgba(15,20,60,.12));
+}
+.cover-logo-zone img.dragging{cursor:grabbing; opacity:.85;}
+.cover-logo-empty{
+  border:1.5px dashed var(--line); border-radius:8px; padding:22px 34px; color:var(--ink-soft);
+  font-size:12.5px; letter-spacing:.03em;
+}
+
+.cover-titlearea{padding:0 28px 20px 20px;}
+.cover-titlearea h1{font-size:30px; margin:0 0 10px; letter-spacing:.01em; font-weight:800; color:var(--navy-950);}
+.cover-rule{height:3px; background:var(--navy-900); width:88px;}
+
+.cover-titleblock{
+  display:grid; grid-template-columns:repeat(3, 1fr); border-top:1.5px solid var(--navy-900);
+}
+.tb-cell{
+  padding:12px 20px; border-right:1px solid var(--navy-900); border-bottom:1px solid var(--navy-900);
+  display:flex; flex-direction:column; gap:3px;
+}
+.tb-cell:nth-child(3n){border-right:none;}
+.tb-label{font-size:9.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-soft); font-weight:700;}
+.tb-value{font-size:13px; font-weight:700; color:var(--navy-950);}
+
+@media print{
+  .cover-logo-zone img{cursor:default;}
+}
 
 .report-section{padding:36px 44px; page-break-after:always;}
 .report-section:last-child{page-break-after:auto;}
@@ -281,8 +328,6 @@ footer.app-footer{
   display:flex; align-items:center; justify-content:center; height:64px; width:140px;
   color:var(--ink-soft); font-size:12px; background:var(--line-soft); border:1px dashed var(--line);
 }
-.rc-mark img{max-height:40px; max-width:180px; display:block; object-fit:contain;}
-
 /* ---------- modal ---------- */
 .modal-backdrop{
   position:fixed; inset:0; background:rgba(10,15,40,.55); display:flex; align-items:center; justify-content:center;
