@@ -271,6 +271,43 @@ footer.app-footer{
   .report-section{page-break-after:always;}
 }
 
+/* ---------- wachtwoordrij (Projecten-tab) ---------- */
+.pw-row{display:flex; align-items:center; gap:8px; margin-top:8px;}
+.pw-value{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12.5px; background:var(--line-soft); padding:2px 8px; border-radius:5px; min-width:70px; display:inline-block;}
+
+/* ---------- logo upload ---------- */
+.logo-preview{max-height:64px; max-width:220px; border-radius:6px; border:1px solid var(--line); background:#fff; object-fit:contain; padding:4px;}
+.logo-preview.placeholder{
+  display:flex; align-items:center; justify-content:center; height:64px; width:140px;
+  color:var(--ink-soft); font-size:12px; background:var(--line-soft); border:1px dashed var(--line);
+}
+.rc-mark img{max-height:40px; max-width:180px; display:block; object-fit:contain;}
+
+/* ---------- modal ---------- */
+.modal-backdrop{
+  position:fixed; inset:0; background:rgba(10,15,40,.55); display:flex; align-items:center; justify-content:center;
+  z-index:100; padding:20px;
+}
+.modal-card{
+  background:#fff; border-radius:12px; padding:26px 26px 22px; width:100%; max-width:460px;
+  box-shadow:0 20px 60px -12px rgba(10,15,40,.4); max-height:90vh; overflow:auto;
+}
+.modal-card h2{margin:0 0 6px; font-size:18px;}
+.modal-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:20px;}
+
+/* ---------- vergrendelscherm ---------- */
+.lock-wrap{display:flex; justify-content:center; padding:60px 20px;}
+.lock-card{
+  background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow);
+  padding:36px 32px; max-width:380px; width:100%; text-align:center;
+}
+.lock-icon{font-size:34px; margin-bottom:10px;}
+.lock-card h1{font-size:17px; margin:0 0 8px;}
+.lock-card p{color:var(--ink-soft); font-size:13px; margin:0 0 16px;}
+.lock-card .field{margin-bottom:14px;}
+.lock-card input{text-align:center;}
+.lock-error{color:var(--bad); font-size:12.5px; font-weight:600; margin-bottom:12px;}
+
 /* ---------- misc ---------- */
 .text-muted{color:var(--ink-soft);}
 .mt-0{margin-top:0;}

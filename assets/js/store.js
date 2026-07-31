@@ -63,7 +63,7 @@ const Store = {
   },
 
   // ---------- projecten ----------
-  createProject(name) {
+  createProject(name, opts) {
     const id = uid("proj");
     const project = {
       id,
@@ -74,9 +74,12 @@ const Store = {
       targetBudget: 0,
       finishingLevel: "medium",
       notes: "",
+      password: (opts && opts.password) || "",
+      logoDataUrl: (opts && opts.logoDataUrl) || null,
       lines: [],
     };
     this.state.projects[id] = project;
+    this.ensureCatalogLines(project);
     this.persistAll();
     return project;
   },
@@ -119,6 +122,38 @@ const Store = {
     if (!p) return;
     Object.assign(p, patch);
     this.persistAll();
+  },
+
+  updateProject(id, patch) {
+    const p = this.state.projects[id];
+    if (!p) return;
+    Object.assign(p, patch);
+    this.persistAll();
+  },
+
+  // zorgt dat elk catalogusitem als (eventueel lege) regel in het project staat,
+  // zodat het budgetoverzicht altijd volledig uitgeklapt is en mensen alleen
+  // hoeveelheden hoeven in te vullen in plaats van items te moeten toevoegen.
+  ensureCatalogLines(project) {
+    if (!project) return false;
+    const existingCodes = new Set(project.lines.filter(l => l.code).map(l => l.code));
+    let changed = false;
+    this.state.catalog.forEach(item => {
+      if (!existingCodes.has(item.code)) {
+        project.lines.push({
+          id: uid("line"),
+          code: item.code,
+          subheader: item.subheader,
+          description: item.description,
+          unit: item.unit,
+          quantity: 0,
+          priceOverride: null,
+        });
+        changed = true;
+      }
+    });
+    if (changed) this.persistAll();
+    return changed;
   },
 
   // ---------- regels ----------

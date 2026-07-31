@@ -2,6 +2,10 @@
 
 const App = {
   tab: "dashboard",
+  modal: null,               // {type:'newProject', name, password, logoDataUrl, error}
+  unlockedProjects: new Set(), // sessie-only: project-id's die deze sessie zijn ontgrendeld
+  unlockError: false,
+  visiblePasswords: new Set(), // sessie-only: welke wachtwoorden op tabblad Projecten getoond worden
 
   init() {
     Store.init();
@@ -27,17 +31,28 @@ const App = {
     document.body.addEventListener("input", (e) => this.handleInput(e));
   },
 
+  isLocked(project) {
+    return !!(project && project.password && !this.unlockedProjects.has(project.id));
+  },
+
   render() {
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === this.tab));
     document.querySelectorAll(".tab-view").forEach(v => v.classList.add("hidden"));
-    const active = document.getElementById("view-" + this.tab);
-    active.classList.remove("hidden");
 
     this.renderProjectPicker();
+    renderModal();
 
     const p = Store.activeProject;
     if (!p) return;
 
+    const gatedTabs = ["dashboard", "budget", "report"];
+    if (gatedTabs.includes(this.tab) && this.isLocked(p)) {
+      document.getElementById("view-locked").classList.remove("hidden");
+      renderLockScreen(p);
+      return;
+    }
+
+    document.getElementById("view-" + this.tab).classList.remove("hidden");
     if (this.tab === "dashboard") renderDashboard(p);
     if (this.tab === "budget") renderBudget(p);
     if (this.tab === "prices") renderPrices();
@@ -49,36 +64,33 @@ const App = {
     const sel = document.getElementById("projectPicker");
     const projects = Object.values(Store.state.projects).sort((a, b) => a.name.localeCompare(b.name));
     sel.innerHTML = projects.map(p =>
-      `<option value="${p.id}" ${p.id === Store.state.activeId ? "selected" : ""}>${escapeHTML(p.name)}</option>`
+      `<option value="${p.id}" ${p.id === Store.state.activeId ? "selected" : ""}>${p.password ? "🔒 " : ""}${escapeHTML(p.name)}</option>`
     ).join("");
   },
 
   // ---------------- centrale event handling ----------------
   handleClick(e) {
+    // modal-backdrop klik (buiten de kaart) sluit de modal
+    if (e.target.classList.contains("modal-backdrop")) {
+      this.modal = null;
+      this.render();
+      return;
+    }
+
     const el = e.target.closest("[data-action]");
     if (!el) return;
     const action = el.dataset.action;
-    const p = Store.activeProject;
 
     switch (action) {
       case "add-line": {
         const row = el.closest("tr");
-        const select = row.querySelector(".add-select");
-        const qtyInput = row.querySelector(".add-qty");
         const subheader = el.dataset.subheader;
-        const qty = Number(qtyInput.value) || 1;
-        if (!select.value) return;
-        if (select.value === "__custom__") {
-          const desc = row.querySelector(".add-custom-desc").value.trim();
-          const unit = row.querySelector(".add-custom-unit").value.trim() || "pieces";
-          const price = Number(row.querySelector(".add-custom-price").value) || 0;
-          if (!desc) { row.querySelector(".add-custom-desc").focus(); return; }
-          Store.addLine(subheader, { description: desc, unit, quantity: qty, priceOverride: price });
-        } else {
-          const item = Store.catalogItem(select.value);
-          if (!item) return;
-          Store.addLine(subheader, { code: item.code, description: item.description, unit: item.unit, quantity: qty });
-        }
+        const desc = row.querySelector(".add-custom-desc").value.trim();
+        const unit = row.querySelector(".add-custom-unit").value.trim() || "pieces";
+        const price = Number(row.querySelector(".add-custom-price").value) || 0;
+        const qty = Number(row.querySelector(".add-qty").value) || 1;
+        if (!desc) { row.querySelector(".add-custom-desc").focus(); return; }
+        Store.addLine(subheader, { description: desc, unit, quantity: qty, priceOverride: price });
         this.render();
         break;
       }
@@ -120,13 +132,35 @@ const App = {
         this.render();
         break;
 
-      case "new-project": {
-        const proj = Store.createProject("Nieuw project");
+      // ---------- projecten aanmaken (modal) ----------
+      case "new-project":
+        this.modal = { type: "newProject", name: "", password: "", logoDataUrl: null, error: null };
+        this.render();
+        break;
+      case "modal-cancel":
+        this.modal = null;
+        this.render();
+        break;
+      case "modal-create-project": {
+        const nameInput = document.getElementById("npName");
+        const pwInput = document.getElementById("npPassword");
+        const name = nameInput.value.trim();
+        const password = pwInput.value.trim();
+        // waarden bewaren in modal-state zodat een her-render (bij validatiefout) ze niet wist
+        this.modal.name = name;
+        this.modal.password = password;
+        if (!name) { this.modal.error = "Vul een projectnaam in."; this.render(); return; }
+        if (!password) { this.modal.error = "Vul een wachtwoord in."; this.render(); return; }
+        const proj = Store.createProject(name, { password, logoDataUrl: this.modal.logoDataUrl || null });
         Store.setActiveProject(proj.id);
+        this.unlockedProjects.add(proj.id); // aanmaker hoeft niet direct opnieuw in te loggen
+        this.modal = null;
         this.tab = "dashboard";
         this.render();
         break;
       }
+
+      // ---------- projecten beheren ----------
       case "select-project":
         Store.setActiveProject(el.dataset.id);
         this.tab = "dashboard";
@@ -154,6 +188,44 @@ const App = {
       case "trigger-import-backup":
         document.getElementById("importBackupFile").click();
         break;
+
+      // ---------- wachtwoorden ----------
+      case "toggle-pw": {
+        const id = el.dataset.id;
+        if (this.visiblePasswords.has(id)) this.visiblePasswords.delete(id); else this.visiblePasswords.add(id);
+        this.render();
+        break;
+      }
+      case "change-password": {
+        const id = el.dataset.id;
+        const proj = Store.state.projects[id];
+        const next = prompt(`Wachtwoord voor '${proj.name}':`, proj.password || "");
+        if (next !== null) {
+          Store.updateProject(id, { password: next.trim() });
+          this.render();
+        }
+        break;
+      }
+      case "unlock-project": {
+        const id = el.dataset.id;
+        const input = document.getElementById("unlockInput");
+        const proj = Store.state.projects[id];
+        if (proj && input && input.value === proj.password) {
+          this.unlockedProjects.add(id);
+          this.unlockError = false;
+        } else {
+          this.unlockError = true;
+        }
+        this.render();
+        break;
+      }
+
+      // ---------- rapportlogo ----------
+      case "remove-logo":
+        Store.updateActiveProject({ logoDataUrl: null });
+        this.render();
+        break;
+
       case "print-report":
         this.tab = "report";
         this.render();
@@ -166,14 +238,6 @@ const App = {
   },
 
   handleChange(e) {
-    // toggle custom-item fields in "add line" rows
-    if (e.target.matches(".add-select")) {
-      const row = e.target.closest("tr");
-      const isCustom = e.target.value === "__custom__";
-      row.querySelectorAll(".custom-fields").forEach(f => f.classList.toggle("hidden", !isCustom));
-      return;
-    }
-
     // project meta fields
     if (e.target.matches("[data-project-field]")) {
       const field = e.target.dataset.projectField;
@@ -223,10 +287,36 @@ const App = {
       return;
     }
 
+    // logo uploaden vanuit de "nieuw project"-modal
+    if (e.target.id === "npLogoFile") {
+      const file = e.target.files[0];
+      if (!file) return;
+      resizeImageFile(file, 480, 0.85, (dataUrl) => {
+        this.modal.logoDataUrl = dataUrl;
+        this.render();
+      });
+      return;
+    }
+
+    // logo uploaden vanuit het Rapport-tabblad
+    if (e.target.id === "reportLogoFile") {
+      const file = e.target.files[0];
+      if (!file) return;
+      resizeImageFile(file, 480, 0.85, (dataUrl) => {
+        Store.updateActiveProject({ logoDataUrl: dataUrl });
+        this.render();
+      });
+      return;
+    }
+
     if (e.target.id === "importProjectFile") {
       readJSONFile(e.target.files[0], (data) => {
         const p = Store.importProject(data);
-        if (p) { Store.setActiveProject(p.id); this.render(); }
+        if (p) {
+          Store.setActiveProject(p.id);
+          if (p.password) this.unlockedProjects.add(p.id); // eigenaar kent het wachtwoord al (stond in het bestand)
+          this.render();
+        }
       });
       e.target.value = "";
     }
@@ -277,6 +367,32 @@ function readJSONFile(file, cb) {
     catch (e) { alert("Kon dit bestand niet lezen: geen geldig JSON-bestand."); }
   };
   reader.readAsText(file);
+}
+
+// schaalt/comprimeert een geüploade afbeelding client-side (canvas) zodat logo's
+// niet onnodig veel ruimte innemen in localStorage.
+function resizeImageFile(file, maxDim, quality, cb) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        const scale = maxDim / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+      cb(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => alert("Kon deze afbeelding niet laden.");
+    img.src = reader.result;
+  };
+  reader.onerror = () => alert("Kon dit bestand niet lezen.");
+  reader.readAsDataURL(file);
 }
 
 document.addEventListener("DOMContentLoaded", () => App.init());
