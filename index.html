@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DreSo Budgettool — Drees & Sommer</title>
+<meta name="description" content="Professionele budgettool voor interieur- en verbouwingsprojecten van Drees & Sommer.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%230f1c4a%22/><text x=%2216%22 y=%2222%22 font-size=%2216%22 font-family=%22Arial%22 font-weight=%22800%22 fill=%22white%22 text-anchor=%22middle%22>DS</text></svg>">
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+<div class="app-shell">
+  <div style="flex:1; min-width:0;">
+    <header class="topbar no-print">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-mark">D&amp;S</div>
+          <div class="brand-text">
+            <div class="t1">DreSo Budgettool</div>
+            <div class="t2">Drees &amp; Sommer</div>
+          </div>
+        </div>
+        <nav class="tabs" id="tabs">
+          <button class="tab-btn" data-tab="dashboard">Dashboard</button>
+          <button class="tab-btn" data-tab="budget">Budget</button>
+          <button class="tab-btn" data-tab="prices">Eenheidsprijzen</button>
+          <button class="tab-btn" data-tab="projects">Projecten</button>
+          <button class="tab-btn" data-tab="report">Rapport</button>
+        </nav>
+        <div class="topbar-right">
+          <select id="projectPicker" class="project-picker"></select>
+        </div>
+      </div>
+    </header>
+
+    <main class="view">
+      <section id="view-dashboard" class="tab-view"></section>
+      <section id="view-budget" class="tab-view"></section>
+      <section id="view-prices" class="tab-view"></section>
+      <section id="view-projects" class="tab-view"></section>
+      <section id="view-report" class="tab-view"></section>
+    </main>
+
+    <footer class="app-footer no-print">
+      DreSo Budgettool &middot; alle gegevens worden lokaal in je browser opgeslagen &middot; gebruik Projecten &rarr; Exporteren om te back-uppen of te delen.
+    </footer>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/charts.js"></script>
+<script src="assets/js/views.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
