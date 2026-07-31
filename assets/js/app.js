@@ -199,7 +199,7 @@ const App = {
         this.modal.name = name;
         this.modal.password = password;
         if (!name) { this.modal.error = t("modal.errorName"); this.render(); return; }
-        if (!password) { this.modal.error = t("modal.errorPassword"); this.render(); return; }
+        // wachtwoord is optioneel: zonder wachtwoord blijft het project onvergrendeld
         const proj = Store.createProject(name, { password, logoDataUrl: this.modal.logoDataUrl || null });
         Store.setActiveProject(proj.id);
         this.unlockedProjects.add(proj.id); // aanmaker hoeft niet direct opnieuw in te loggen

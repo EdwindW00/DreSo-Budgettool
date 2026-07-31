@@ -1,7 +1,7 @@
 /* DreSo Budgettool — service worker: maakt de app installeerbaar en offline bruikbaar.
    Werkt volledig los van de projectgegevens: die staan in localStorage, niet hier. */
 
-const CACHE_NAME = "dreso-budgettool-v1";
+const CACHE_NAME = "dreso-budgettool-v2";
 
 const APP_SHELL = [
   "./",
