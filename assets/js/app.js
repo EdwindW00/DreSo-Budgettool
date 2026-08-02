@@ -7,6 +7,7 @@ const App = {
   unlockError: false,
   visiblePasswords: new Set(), // sessie-only: welke wachtwoorden op tabblad Projecten getoond worden
   reportLevels: null,          // sessie-only: welke afwerkingsniveaus getoond worden op tabblad Rapport
+  openComments: new Set(),     // sessie-only: welke regel-opmerkingen op het Budget-tabblad open staan
 
   deferredInstallPrompt: null,
 
@@ -147,6 +148,15 @@ const App = {
       case "remove-line":
         if (confirm(t("confirm.removeLine"))) { Store.removeLine(el.dataset.lineId); this.render(); }
         break;
+
+      case "toggle-comment": {
+        const id = el.dataset.lineId;
+        if (this.openComments.has(id)) this.openComments.delete(id); else this.openComments.add(id);
+        this.render();
+        // focus het net geopende opmerkingenveld
+        requestAnimationFrame(() => document.querySelector(`[data-line-field="comment"][data-line-id="${id}"]`)?.focus());
+        break;
+      }
 
       case "reset-all-quantities":
         if (confirm(t("confirm.resetQuantities"))) {
@@ -354,6 +364,8 @@ const App = {
         }
       } else if (field === "description") {
         Store.updateLine(lineId, { description: e.target.value });
+      } else if (field === "comment") {
+        Store.updateLine(lineId, { comment: e.target.value });
       } else if (field === "price") {
         const raw = e.target.value;
         const catalogItem = Store.catalogItem(line.code);

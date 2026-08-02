@@ -136,6 +136,23 @@ const DEFAULT_CATALOG = [
   ["7.01.03","07.01","Constructional consultancy","lot",0],
   ["7.01.04","07.01","Design / architect","lot",70000],
   ["8.01.01","08.01","Contingency (10-15%)","lot",200000],
-].map(([code, subheader, description, unit, price]) => ({ code, subheader, description, unit, price }));
+].map(([code, subheader, description, unit, price]) => ({ code, subheader, description, unit, price, quantitySource: null }));
+
+// koppelt bepaalde catalogusitems standaard aan een projectkengetal, zodat hun
+// hoeveelheid automatisch meeschaalt met het ingevulde vloeroppervlak/werkplekken/
+// headcount — kan per item aangepast worden op het tabblad Eenheidsprijzen.
+const QUANTITY_SOURCE_KEYS = ["floorArea", "workplaces", "headcount", "meetingRooms", "meetingSeats"];
+
+DEFAULT_CATALOG.forEach((item) => {
+  if (item.unit === "m²") item.quantitySource = "floorArea";
+});
+["4.01.01", "4.01.03"].forEach((code) => {
+  const item = DEFAULT_CATALOG.find((i) => i.code === code);
+  if (item) item.quantitySource = "workplaces";
+});
+["6.01.01", "6.01.02"].forEach((code) => {
+  const item = DEFAULT_CATALOG.find((i) => i.code === code);
+  if (item) item.quantitySource = "headcount";
+});
 
 const COMMON_UNITS = ["m²","m","m³","pieces","lot","day","days","weeks","connection","room","seat","person"];

@@ -25,17 +25,29 @@ succesvolle deploy is de tool bereikbaar op:
 - **Budget-tabblad staat altijd volledig uitgeklapt**: alle standaard posten (89 items
   uit de catalogus, per hoofd- en subcategorie) staan al klaar — je vult alleen de
   hoeveelheid in. Per subcategorie kun je daarnaast losse, eigen (niet-standaard)
-  items toevoegen.
+  items toevoegen. Eenheden zijn per regel aanpasbaar, en met één knop zet je alle
+  hoeveelheden terug naar 0 (met bevestiging).
+- **Projectkengetallen**: vloeroppervlak, aantal werkplekken, headcount en aantal
+  vergaderruimtes/-plekken invullen op het Dashboard. Vloeroppervlak, werkplekken en
+  headcount kunnen per catalogusitem gekoppeld worden (tabblad Eenheidsprijzen) zodat
+  de hoeveelheid van die regel automatisch meeschaalt — geen handmatig overtypen meer.
+  Het Dashboard toont ook budget per m², per werkplek en per persoon.
+- **Opmerkingen per budgetregel**: voeg een toelichting toe aan elke regel (bv. "klant
+  wil natuursteen i.p.v. standaard") via het spraakbelletje-icoon — deze opmerkingen
+  verschijnen ook in het rapport, als onderbouwing voor de klant.
 - **Eenheidsprijzen centraal beheren en aanpassen** op het tabblad *Eenheidsprijzen* —
   wijzigingen werken direct door in elk project, tenzij een projectregel lokaal is
   overschreven.
 - **Afwerkingsniveau** (Low -5% / Medium +0% / High +10%) dat automatisch op alle
-  eenheidsprijzen wordt toegepast, net als in de Excel-tool.
+  eenheidsprijzen wordt toegepast, net als in de Excel-tool. De percentages per niveau
+  zijn zelf aan te passen op het tabblad Eenheidsprijzen (met reset naar standaard), en
+  in het rapport kies je zelf welke niveaus getoond worden — één of meerdere naast
+  elkaar, bijvoorbeeld om een klant een Low/Medium/High-vergelijking te geven.
 - **Dashboard** met doelbudget vs. begrote uitgaven, resterend budget en verdeling per
   categorie (donutchart + staafdiagram).
 - **Rapport** in een representatieve, professionele lay-out (cover met projectlogo,
-  samenvatting, detailtabellen per categorie) — met één klik te printen of als PDF op
-  te slaan.
+  samenvatting met taartdiagram, detailtabellen per categorie inclusief opmerkingen) —
+  met één klik te printen of als PDF op te slaan.
 - **Logo / afbeelding per project**: te uploaden bij het aanmaken van een project of
   later via het tabblad Rapport; verschijnt op de coverpagina van het rapport.
 - **Projectwachtwoord**: elk nieuw project vraagt een verplicht wachtwoord dat

@@ -182,6 +182,8 @@ table{border-collapse:collapse; width:100%; font-size:13.5px;}
   border:none; background:transparent; color:var(--ink-soft); cursor:pointer; padding:4px 6px; border-radius:6px; font-size:14px; line-height:1;
 }
 .icon-btn:hover{background:#fde3e0; color:var(--bad);}
+.icon-btn.has-comment{color:var(--blue-500);}
+.icon-btn.has-comment:hover{background:var(--blue-100); color:var(--blue-500);}
 
 .add-row{background:var(--bg);}
 .add-row td{padding:10px 12px;}
@@ -194,6 +196,15 @@ table{border-collapse:collapse; width:100%; font-size:13.5px;}
 /* ---------- chips / badges ---------- */
 .chip{display:inline-flex; align-items:center; gap:5px; background:var(--blue-100); color:var(--navy-800); border-radius:999px; padding:3px 10px; font-size:11.5px; font-weight:700;}
 .override-chip{background:#fff3da; color:var(--warn);}
+.auto-chip{background:var(--blue-50); color:var(--blue-500); border:1px solid var(--blue-100); font-size:10.5px; margin-top:4px;}
+
+/* ---------- opmerkingen per budgetregel ---------- */
+.comment-row td{background:var(--blue-50); padding:8px 10px 10px;}
+.comment-input{
+  width:100%; border:1px solid var(--blue-100); border-radius:6px; padding:7px 9px; font-size:13px;
+  resize:vertical; font-family:inherit; background:#fff;
+}
+.comment-input:focus{outline:2px solid var(--blue-400); outline-offset:0;}
 
 /* ---------- Dashboard charts ---------- */
 .chart-legend{display:flex; flex-direction:column; gap:8px;}
@@ -337,6 +348,8 @@ footer.app-footer{
 .rep-table td{padding:5px 8px; border-bottom:1px solid var(--line-soft); font-size:12px;}
 .rep-sub-row td{font-weight:700; background:var(--blue-50); color:var(--navy-800);}
 .rep-cat-total-row td{font-weight:800; border-top:2px solid var(--navy-900); padding-top:8px;}
+.rep-comment-row td{padding:2px 8px 8px; border-bottom:1px solid var(--line-soft); font-size:11px; color:var(--ink-soft); font-style:italic;}
+.rep-comment-label{font-weight:700; font-style:normal; color:var(--navy-800);}
 
 @media print{
   .no-print{display:none !important;}

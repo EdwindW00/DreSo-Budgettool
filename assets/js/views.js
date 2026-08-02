@@ -4,8 +4,21 @@ function finishLabel(key) {
   return t("finish." + key);
 }
 
+// dropdown waarmee een catalogusitem gekoppeld wordt aan een projectkengetal
+// (vloeroppervlak, werkplekken, headcount...) zodat de hoeveelheid automatisch meeschaalt
+function quantitySourceSelect(item) {
+  const options = [`<option value="" ${!item.quantitySource ? "selected" : ""}>${t("qtySource.manual")}</option>`]
+    .concat(QUANTITY_SOURCE_KEYS.map(key =>
+      `<option value="${key}" ${item.quantitySource === key ? "selected" : ""}>${t("qtySource." + key)}</option>`));
+  return `<select data-catalog-field="quantitySource" data-code="${item.code}" style="width:100%;">${options.join("")}</select>`;
+}
+
 // ============================================================ DASHBOARD
 function renderDashboard(project) {
+  // vloeroppervlak/werkplekken/headcount direct verwerken in gekoppelde budgetregels
+  Store.ensureCatalogLines(project);
+  Store.syncAutoQuantities(project);
+
   const el = document.getElementById("view-dashboard");
   const total = Calc.projectTotal(project);
   const diff = (Number(project.targetBudget) || 0) - total;
@@ -54,6 +67,16 @@ function renderDashboard(project) {
             <input type="text" data-project-field="preparedBy" value="${escapeHTML(project.preparedBy || "")}" placeholder="${t("dash.fieldPreparedByPlaceholder")}"></div>
         </div>
         <div class="field-row" style="margin-top:14px;">
+          <div class="field"><label>${t("dash.fieldWorkplaces")}</label>
+            <input type="number" min="0" data-project-field="workplaces" value="${project.workplaces || 0}"></div>
+          <div class="field"><label>${t("dash.fieldHeadcount")}</label>
+            <input type="number" min="0" data-project-field="headcount" value="${project.headcount || 0}"></div>
+          <div class="field"><label>${t("dash.fieldMeetingRooms")}</label>
+            <input type="number" min="0" data-project-field="meetingRooms" value="${project.meetingRooms || 0}"></div>
+          <div class="field"><label>${t("dash.fieldMeetingSeats")}</label>
+            <input type="number" min="0" data-project-field="meetingSeats" value="${project.meetingSeats || 0}"></div>
+        </div>
+        <div class="field-row" style="margin-top:14px;">
           <div class="field"><label>${t("dash.fieldTargetBudget")}</label>
             <input type="number" min="0" step="1000" data-project-field="targetBudget" value="${project.targetBudget || 0}"></div>
           <div class="field" style="flex:2;">
@@ -92,6 +115,24 @@ function renderDashboard(project) {
       </div>
     </div>
 
+    <div class="grid grid-3" style="margin-top:18px;">
+      <div class="kpi">
+        <div class="label">${t("dash.kpiPerM2")}</div>
+        <div class="value">${Calc.perUnit(project.targetBudget, project.floorArea) != null ? fmtEUR2(Calc.perUnit(project.targetBudget, project.floorArea)) : "—"}</div>
+        <div class="sub">${fmtNum(project.floorArea)} m²</div>
+      </div>
+      <div class="kpi">
+        <div class="label">${t("dash.kpiPerWorkplace")}</div>
+        <div class="value">${Calc.perUnit(project.targetBudget, project.workplaces) != null ? fmtEUR2(Calc.perUnit(project.targetBudget, project.workplaces)) : "—"}</div>
+        <div class="sub">${fmtNum(project.workplaces)} ${t("dash.fieldWorkplaces").toLowerCase()}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">${t("dash.kpiPerHeadcount")}</div>
+        <div class="value">${Calc.perUnit(project.targetBudget, project.headcount) != null ? fmtEUR2(Calc.perUnit(project.targetBudget, project.headcount)) : "—"}</div>
+        <div class="sub">${fmtNum(project.headcount)} ${t("dash.fieldHeadcount").toLowerCase()}</div>
+      </div>
+    </div>
+
     <div class="grid grid-2" style="margin-top:18px; align-items:stretch;">
       <div class="panel">
         <div class="panel-head"><h2>${t("dash.categoryBreakdown")}</h2></div>
@@ -115,6 +156,8 @@ function renderBudget(project) {
   // zorg dat elk catalogusitem als regel aanwezig is: het budget staat altijd
   // volledig uitgeklapt, mensen hoeven alleen hoeveelheden in te vullen.
   Store.ensureCatalogLines(project);
+  // vloeroppervlak/werkplekken/headcount direct verwerken in gekoppelde regels
+  Store.syncAutoQuantities(project);
 
   const el = document.getElementById("view-budget");
   const total = Calc.projectTotal(project);
@@ -137,6 +180,14 @@ function renderBudget(project) {
         const lineTotal = Calc.lineTotal(line, project);
         const isOverride = line.priceOverride != null;
         const isUnitOverride = line.unitOverride != null;
+        const autoSource = catalogItem ? catalogItem.quantitySource : null;
+        const hasComment = !!(line.comment && line.comment.trim());
+        const commentOpen = App.openComments.has(line.id) || hasComment;
+
+        const qtyCell = autoSource
+          ? `<input class="qty-input" type="number" value="${line.quantity}" disabled title="${t("budget.autoLinked", { source: t("qtySource." + autoSource) })}">`
+          : `<input class="qty-input" type="number" min="0" step="any" data-line-field="quantity" data-line-id="${line.id}" value="${line.quantity}">`;
+
         return `
           <tr class="item-row">
             <td class="small text-muted">${line.code || "&mdash;"}</td>
@@ -146,7 +197,8 @@ function renderBudget(project) {
                 : `<input class="desc-input" data-line-field="description" data-line-id="${line.id}" value="${escapeHTML(description)}">`}
             </td>
             <td class="center">
-              <input class="qty-input" type="number" min="0" step="any" data-line-field="quantity" data-line-id="${line.id}" value="${line.quantity}">
+              ${qtyCell}
+              ${autoSource ? `<span class="chip auto-chip">${t("qtySource." + autoSource)}</span>` : ""}
             </td>
             <td class="center">
               <input class="qty-input" style="width:76px" data-line-field="unit" data-line-id="${line.id}" value="${escapeHTML(unit)}">
@@ -157,8 +209,18 @@ function renderBudget(project) {
               ${isOverride ? `<span class="chip override-chip">${t("budget.chipCustom")}</span>` : ""}
             </td>
             <td class="num" style="font-weight:700;">${fmtEUR2(lineTotal)}</td>
-            <td class="center">${catalogItem ? "" : `<button class="icon-btn" data-action="remove-line" data-line-id="${line.id}" title="${t("budget.remove")}">&#10005;</button>`}</td>
-          </tr>`;
+            <td class="center">
+              <button class="icon-btn ${hasComment ? "has-comment" : ""}" data-action="toggle-comment" data-line-id="${line.id}" title="${t("budget.commentBtn")}">&#128172;</button>
+              ${catalogItem ? "" : `<button class="icon-btn" data-action="remove-line" data-line-id="${line.id}" title="${t("budget.remove")}">&#10005;</button>`}
+            </td>
+          </tr>
+          ${commentOpen ? `
+          <tr class="comment-row">
+            <td></td>
+            <td colspan="6">
+              <textarea class="comment-input" rows="2" data-line-field="comment" data-line-id="${line.id}" placeholder="${t("budget.commentPlaceholder")}">${escapeHTML(line.comment || "")}</textarea>
+            </td>
+          </tr>` : ""}`;
       }).join("");
 
       return `
@@ -190,7 +252,7 @@ function renderBudget(project) {
             <th class="center" style="width:80px;">${t("budget.colUnit")}</th>
             <th class="num" style="width:130px;">${t("budget.colUnitPrice")}</th>
             <th class="num" style="width:120px;">${t("budget.colTotal")}</th>
-            <th style="width:36px;"></th>
+            <th style="width:60px;"></th>
           </tr>
         </thead>
         <tbody>${subBlocks}</tbody>
@@ -235,17 +297,19 @@ function renderPrices(filter) {
           <td><input class="desc-input" data-catalog-field="description" data-code="${item.code}" value="${escapeHTML(item.description)}"></td>
           <td class="center"><input class="qty-input" style="width:80px" data-catalog-field="unit" data-code="${item.code}" value="${escapeHTML(item.unit)}"></td>
           <td class="num"><input class="price-input" type="number" min="0" step="any" data-catalog-field="price" data-code="${item.code}" value="${item.price}"></td>
+          <td class="center">${quantitySourceSelect(item)}</td>
           <td class="center"><button class="icon-btn" data-action="remove-catalog-item" data-code="${item.code}" title="${t("budget.remove")}">&#10005;</button></td>
         </tr>`).join("");
 
       return `
-        <tr class="sub-row"><td colspan="5">${sub.code} &middot; ${escapeHTML(sub.name)}</td></tr>
+        <tr class="sub-row"><td colspan="6">${sub.code} &middot; ${escapeHTML(sub.name)}</td></tr>
         ${rows}
         <tr class="add-row">
           <td></td>
           <td><input class="new-item-desc" placeholder="${t("prices.newDescPlaceholder")}" style="width:100%;"></td>
           <td class="center"><input class="new-item-unit" placeholder="${t("prices.newUnitPlaceholder")}" style="width:80px;"></td>
           <td class="num"><input class="new-item-price" type="number" placeholder="0" style="width:100px;"></td>
+          <td></td>
           <td class="center"><button class="btn btn-sm btn-light" data-action="add-catalog-item" data-subheader="${sub.code}">+</button></td>
         </tr>`;
     }).join("");
@@ -255,8 +319,8 @@ function renderPrices(filter) {
     return `
       <table class="budget-table" style="margin-bottom:22px;">
         <thead>
-          <tr class="cat-row"><td colspan="5">${cat.code} &middot; ${escapeHTML(cat.name).toUpperCase()} <button class="btn btn-sm btn-ghost" style="margin-left:10px; background:rgba(255,255,255,.15); border-color:rgba(255,255,255,.3);" data-action="add-subheader" data-category="${cat.code}">${t("prices.addSubheader")}</button></td></tr>
-          <tr><th style="width:70px;">${t("prices.colCode")}</th><th>${t("prices.colDescription")}</th><th class="center" style="width:100px;">${t("prices.colUnit")}</th><th class="num" style="width:120px;">${t("prices.colUnitPrice")}</th><th style="width:36px;"></th></tr>
+          <tr class="cat-row"><td colspan="6">${cat.code} &middot; ${escapeHTML(cat.name).toUpperCase()} <button class="btn btn-sm btn-ghost" style="margin-left:10px; background:rgba(255,255,255,.15); border-color:rgba(255,255,255,.3);" data-action="add-subheader" data-category="${cat.code}">${t("prices.addSubheader")}</button></td></tr>
+          <tr><th style="width:70px;">${t("prices.colCode")}</th><th>${t("prices.colDescription")}</th><th class="center" style="width:100px;">${t("prices.colUnit")}</th><th class="num" style="width:120px;">${t("prices.colUnitPrice")}</th><th class="center" style="width:150px;">${t("prices.colLink")}</th><th style="width:36px;"></th></tr>
         </thead>
         <tbody>${subBlocks}</tbody>
       </table>`;
@@ -404,6 +468,7 @@ function buildReportLevelBlock(project, levelKey, showLevelHeading) {
         const catalogItem = Store.catalogItem(l.code);
         const description = catalogItem ? catalogItem.description : l.description;
         const unit = Calc.effectiveUnit(l);
+        const comment = (l.comment || "").trim();
         return `
         <tr>
           <td>${l.code || ""}</td>
@@ -411,7 +476,8 @@ function buildReportLevelBlock(project, levelKey, showLevelHeading) {
           <td class="num">${fmtNum(l.quantity)} ${escapeHTML(unit)}</td>
           <td class="num">${fmtEUR2(Calc.effectiveUnitPrice(l, levelProject))}</td>
           <td class="num">${fmtEUR2(Calc.lineTotal(l, levelProject))}</td>
-        </tr>`;
+        </tr>
+        ${comment ? `<tr class="rep-comment-row"><td></td><td colspan="4"><span class="rep-comment-label">${t("report.commentLabel")}:</span> ${escapeHTML(comment)}</td></tr>` : ""}`;
       }).join("");
       return `
         <table class="rep-table" style="width:100%; margin-bottom:10px;">
@@ -432,23 +498,30 @@ function buildReportLevelBlock(project, levelKey, showLevelHeading) {
       </div>`;
   }).join("");
 
+  const pieChart = catRows.length
+    ? donutChart(catRows.map((r, i) => ({ value: r.value, color: PALETTE[i % PALETTE.length] })), { size: 108, stroke: 34 })
+    : "";
+
   const summaryBlock = `
     <div class="report-section report-summary-page">
       ${reportHeaderRow(project, levelBadge)}
       <h2 class="report-h2">${t("report.summary")}</h2>
       <div class="summary-narrow">
-        <div class="grid grid-3" style="margin-bottom:18px;">
+        <div class="grid grid-3" style="margin-bottom:16px;">
           <div class="kpi"><div class="label">${t("report.kpiTarget")}</div><div class="value">${fmtEUR(project.targetBudget)}</div></div>
           <div class="kpi"><div class="label">${t("report.kpiExpenses")}</div><div class="value">${fmtEUR(total)}</div></div>
           <div class="kpi ${project.targetBudget - total >= 0 ? "good" : "bad"}"><div class="label">${project.targetBudget - total >= 0 ? t("report.kpiRemaining") : t("report.kpiOverrun")}</div><div class="value">${fmtEUR(Math.abs(project.targetBudget - total))}</div></div>
         </div>
-        <table class="rep-table summary-table" style="width:100%;">
-          <thead><tr><th>${t("report.colCategory")}</th><th class="num">${t("report.colPercent")}</th><th class="num">${t("report.colAmount")}</th></tr></thead>
-          <tbody>
-            ${summaryRows}
-            <tr class="rep-cat-total-row"><td>${t("report.colTotal")}</td><td class="num">100%</td><td class="num">${fmtEUR(total)}</td></tr>
-          </tbody>
-        </table>
+        <div style="display:flex; gap:18px; align-items:center;">
+          ${pieChart ? `<div style="flex:none;">${pieChart}</div>` : ""}
+          <table class="rep-table summary-table" style="width:100%; flex:1;">
+            <thead><tr><th>${t("report.colCategory")}</th><th class="num">${t("report.colPercent")}</th><th class="num">${t("report.colAmount")}</th></tr></thead>
+            <tbody>
+              ${summaryRows}
+              <tr class="rep-cat-total-row"><td>${t("report.colTotal")}</td><td class="num">100%</td><td class="num">${fmtEUR(total)}</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>`;
 
@@ -470,6 +543,9 @@ function reportHeaderRow(project, extraBadge) {
 }
 
 function renderReport(project) {
+  Store.ensureCatalogLines(project);
+  Store.syncAutoQuantities(project);
+
   const el = document.getElementById("view-report");
 
   // sessie-selectie welke afwerkingsniveaus getoond worden; standaard het huidige niveau van het project

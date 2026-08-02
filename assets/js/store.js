@@ -92,6 +92,10 @@ const Store = {
       id,
       name: name || "Nieuw project",
       floorArea: 0,
+      workplaces: 0,
+      headcount: 0,
+      meetingRooms: 0,
+      meetingSeats: 0,
       projectDate: new Date().toISOString().slice(0, 10),
       preparedBy: "",
       targetBudget: 0,
@@ -174,7 +178,39 @@ const Store = {
           unit: item.unit,
           quantity: 0,
           priceOverride: null,
+          comment: "",
         });
+        changed = true;
+      }
+    });
+    if (changed) this.persistAll();
+    return changed;
+  },
+
+  // huidige waarde van een projectkengetal (bv. vloeroppervlak, aantal werkplekken)
+  driverValue(project, source) {
+    switch (source) {
+      case "floorArea": return Number(project.floorArea) || 0;
+      case "workplaces": return Number(project.workplaces) || 0;
+      case "headcount": return Number(project.headcount) || 0;
+      case "meetingRooms": return Number(project.meetingRooms) || 0;
+      case "meetingSeats": return Number(project.meetingSeats) || 0;
+      default: return null;
+    }
+  },
+
+  // zet de hoeveelheid van regels die aan een projectkengetal gekoppeld zijn
+  // (via het catalogusitem se "quantitySource") automatisch gelijk aan dat kengetal.
+  syncAutoQuantities(project) {
+    if (!project) return false;
+    let changed = false;
+    project.lines.forEach(line => {
+      if (!line.code) return;
+      const item = this.catalogItem(line.code);
+      if (!item || !item.quantitySource) return;
+      const val = this.driverValue(project, item.quantitySource);
+      if (val != null && Number(line.quantity) !== val) {
+        line.quantity = val;
         changed = true;
       }
     });
@@ -194,6 +230,7 @@ const Store = {
       unit: opts.unit || "pieces",
       quantity: Number(opts.quantity) || 0,
       priceOverride: opts.priceOverride != null ? Number(opts.priceOverride) : null,
+      comment: "",
     };
     p.lines.push(line);
     this.persistAll();
@@ -230,6 +267,7 @@ const Store = {
       description: item.description || "Nieuw item",
       unit: item.unit || "pieces",
       price: Number(item.price) || 0,
+      quantitySource: item.quantitySource || null,
     });
     this.persistAll();
   },
@@ -367,6 +405,12 @@ const Calc = {
 
   projectTotal(project) {
     return project.lines.reduce((sum, l) => sum + Calc.lineTotal(l, project), 0);
+  },
+
+  // bedrag gedeeld door een projectkengetal (m², werkplekken, headcount...); null bij 0/leeg
+  perUnit(amount, count) {
+    const c = Number(count) || 0;
+    return c > 0 ? amount / c : null;
   },
 
   totalsBySubheader(project) {
