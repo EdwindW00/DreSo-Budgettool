@@ -1,4 +1,4 @@
-name: Deploy DreSo Budgettool to GitHub Pages
+name: Deploy Edwin's Budgettool to GitHub Pages
 
 on:
   push:

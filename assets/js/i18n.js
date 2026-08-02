@@ -1,4 +1,4 @@
-/* DreSo Budgettool — meertalige interface
+/* Edwin's Budgettool — meertalige interface
    Let op: dit vertaalt alleen de interface (knoppen, labels, meldingen).
    Categorieën, subcategorieën en catalogusomschrijvingen (uit de Excel-tool)
    blijven bewust in het Engels — dat zijn vaktermen uit de bouw-/inrichtingswereld. */
@@ -18,7 +18,7 @@ const I18N = {
   nl: {
     "tab.dashboard": "Dashboard", "tab.budget": "Budget", "tab.prices": "Eenheidsprijzen",
     "tab.projects": "Projecten", "tab.report": "Rapport",
-    "footer.text": "DreSo Budgettool &middot; alle gegevens worden lokaal in je browser opgeslagen &middot; gebruik Projecten &rarr; Exporteren om te back-uppen of te delen.",
+    "footer.text": "Edwin's Budgettool &middot; alle gegevens worden lokaal in je browser opgeslagen &middot; gebruik Projecten &rarr; Exporteren om te back-uppen of te delen.",
 
     "dash.title": "Dashboard",
     "dash.subtitle": "Projectgegevens, voortgang en verdeling van het budget.",
@@ -165,7 +165,7 @@ const I18N = {
   en: {
     "tab.dashboard": "Dashboard", "tab.budget": "Budget", "tab.prices": "Unit prices",
     "tab.projects": "Projects", "tab.report": "Report",
-    "footer.text": "DreSo Budget Tool &middot; all data is stored locally in your browser &middot; use Projects &rarr; Export to back up or share.",
+    "footer.text": "Edwin's Budget Tool &middot; all data is stored locally in your browser &middot; use Projects &rarr; Export to back up or share.",
 
     "dash.title": "Dashboard",
     "dash.subtitle": "Project details, progress and budget breakdown.",
@@ -312,7 +312,7 @@ const I18N = {
   de: {
     "tab.dashboard": "Dashboard", "tab.budget": "Budget", "tab.prices": "Einheitspreise",
     "tab.projects": "Projekte", "tab.report": "Bericht",
-    "footer.text": "DreSo Budgettool &middot; alle Daten werden lokal in deinem Browser gespeichert &middot; nutze Projekte &rarr; Exportieren zum Sichern oder Teilen.",
+    "footer.text": "Edwin's Budgettool &middot; alle Daten werden lokal in deinem Browser gespeichert &middot; nutze Projekte &rarr; Exportieren zum Sichern oder Teilen.",
 
     "dash.title": "Dashboard",
     "dash.subtitle": "Projektdaten, Fortschritt und Budgetverteilung.",
@@ -459,7 +459,7 @@ const I18N = {
   fr: {
     "tab.dashboard": "Tableau de bord", "tab.budget": "Budget", "tab.prices": "Prix unitaires",
     "tab.projects": "Projets", "tab.report": "Rapport",
-    "footer.text": "DreSo Budgettool &middot; toutes les données sont stockées localement dans votre navigateur &middot; utilisez Projets &rarr; Exporter pour sauvegarder ou partager.",
+    "footer.text": "Edwin's Budgettool &middot; toutes les données sont stockées localement dans votre navigateur &middot; utilisez Projets &rarr; Exporter pour sauvegarder ou partager.",
 
     "dash.title": "Tableau de bord",
     "dash.subtitle": "Informations projet, avancement et répartition du budget.",
@@ -606,7 +606,7 @@ const I18N = {
   ru: {
     "tab.dashboard": "Панель", "tab.budget": "Бюджет", "tab.prices": "Расценки",
     "tab.projects": "Проекты", "tab.report": "Отчёт",
-    "footer.text": "DreSo Budgettool &middot; все данные хранятся локально в вашем браузере &middot; используйте «Проекты &rarr; Экспорт», чтобы сделать резервную копию или поделиться.",
+    "footer.text": "Edwin's Budgettool &middot; все данные хранятся локально в вашем браузере &middot; используйте «Проекты &rarr; Экспорт», чтобы сделать резервную копию или поделиться.",
 
     "dash.title": "Панель управления",
     "dash.subtitle": "Данные проекта, ход выполнения и распределение бюджета.",
@@ -753,7 +753,7 @@ const I18N = {
   th: {
     "tab.dashboard": "แดชบอร์ด", "tab.budget": "งบประมาณ", "tab.prices": "ราคาต่อหน่วย",
     "tab.projects": "โครงการ", "tab.report": "รายงาน",
-    "footer.text": "DreSo Budgettool &middot; ข้อมูลทั้งหมดถูกจัดเก็บไว้ในเบราว์เซอร์ของคุณเท่านั้น &middot; ใช้เมนู โครงการ &rarr; ส่งออก เพื่อสำรองหรือแชร์ข้อมูล",
+    "footer.text": "Edwin's Budgettool &middot; ข้อมูลทั้งหมดถูกจัดเก็บไว้ในเบราว์เซอร์ของคุณเท่านั้น &middot; ใช้เมนู โครงการ &rarr; ส่งออก เพื่อสำรองหรือแชร์ข้อมูล",
 
     "dash.title": "แดชบอร์ด",
     "dash.subtitle": "ข้อมูลโครงการ ความคืบหน้า และการกระจายงบประมาณ",
@@ -900,7 +900,7 @@ const I18N = {
   ar: {
     "tab.dashboard": "لوحة التحكم", "tab.budget": "الميزانية", "tab.prices": "أسعار الوحدات",
     "tab.projects": "المشاريع", "tab.report": "التقرير",
-    "footer.text": "DreSo Budgettool &middot; تُحفظ جميع البيانات محليًا في متصفحك &middot; استخدم المشاريع &rarr; تصدير لعمل نسخة احتياطية أو للمشاركة.",
+    "footer.text": "Edwin's Budgettool &middot; تُحفظ جميع البيانات محليًا في متصفحك &middot; استخدم المشاريع &rarr; تصدير لعمل نسخة احتياطية أو للمشاركة.",
 
     "dash.title": "لوحة التحكم",
     "dash.subtitle": "بيانات المشروع والتقدّم وتوزيع الميزانية.",

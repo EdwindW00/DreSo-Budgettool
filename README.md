@@ -1,7 +1,7 @@
-# DreSo Budgettool
+# Edwin's Budgettool
 
-Professionele, webgebaseerde budgettool voor interieur- en verbouwingsprojecten van
-Drees & Sommer — de opvolger van de Excel-budgettool (`aaDreSo Excel Budgettool.xlsx`).
+Professionele, webgebaseerde budgettool voor interieur- en verbouwingsprojecten —
+de opvolger van een bestaande Excel-budgettool.
 
 **Live app:** wordt automatisch gepubliceerd via GitHub Pages zodra deze repository
 Pages inschakelt (Settings → Pages → Source: *GitHub Actions*). Na de eerste
@@ -94,7 +94,7 @@ niet als echte geheimen.
 
 ## Herkomst
 
-De categorieën, subcategorieën en standaard eenheidsprijzen zijn overgenomen uit de
-bestaande `aaDreSo Excel Budgettool.xlsx`. De rapportlay-out is geïnspireerd op het
-format van BCG Amsterdam Office budgetramingen, herontworpen voor een
-professionelere, overzichtelijkere uitstraling.
+De categorieën, subcategorieën en standaard eenheidsprijzen zijn overgenomen uit een
+bestaande Excel-budgettool. De rapportlay-out is geïnspireerd op het format van
+budgetramingen zoals gebruikelijk in de bouw-/projectmanagementwereld, herontworpen
+voor een professionelere, overzichtelijkere uitstraling.

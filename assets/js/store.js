@@ -1,4 +1,4 @@
-/* DreSo Budgettool — dataopslag & berekeningen (localStorage, geen server nodig) */
+/* Edwin's Budgettool — dataopslag & berekeningen (localStorage, geen server nodig) */
 
 const LS_KEYS = {
   categories: "dreso.categories.v1",

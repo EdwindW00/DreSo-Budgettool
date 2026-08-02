@@ -1,5 +1,5 @@
-/* DreSo Budgettool — referentiedata
-   Overgenomen en opgeschoond uit "aaDreSo Excel Budgettool.xlsx"
+/* Edwin's Budgettool — referentiedata
+   Overgenomen en opgeschoond uit de oorspronkelijke Excel-budgettool
    (tabblad "Eenheidsprijzenoverzicht" / "Budget"). */
 
 /* Standaardwaarden voor de afwerkingsniveaus. Percentages zijn instelbaar

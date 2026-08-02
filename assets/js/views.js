@@ -1,4 +1,4 @@
-/* DreSo Budgettool — render-functies per tabblad */
+/* Edwin's Budgettool — render-functies per tabblad */
 
 function finishLabel(key) {
   return t("finish." + key);
@@ -556,7 +556,7 @@ function renderReport(project) {
           <div class="tb-cell"><span class="tb-label">${t("report.tbProject")}</span><span class="tb-value">${escapeHTML(project.name)}</span></div>
           <div class="tb-cell"><span class="tb-label">${t("report.tbArea")}</span><span class="tb-value">${fmtNum(project.floorArea)} m&sup2;</span></div>
           <div class="tb-cell"><span class="tb-label">${t("report.tbDate")}</span><span class="tb-value">${project.projectDate || ""}</span></div>
-          <div class="tb-cell"><span class="tb-label">${t("report.tbPreparedBy")}</span><span class="tb-value">${escapeHTML(project.preparedBy || "Drees & Sommer")}</span></div>
+          <div class="tb-cell"><span class="tb-label">${t("report.tbPreparedBy")}</span><span class="tb-value">${escapeHTML(project.preparedBy || "—")}</span></div>
           <div class="tb-cell"><span class="tb-label">${t("report.tbDocument")}</span><span class="tb-value">${t("report.tbDocumentValue")}</span></div>
           <div class="tb-cell"><span class="tb-label">${t("report.tbStatus")}</span><span class="tb-value">${t("report.tbStatusValue")}</span></div>
         </div>

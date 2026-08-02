@@ -1,7 +1,7 @@
 {
-  "name": "DreSo Budgettool",
-  "short_name": "DreSo Budget",
-  "description": "Professionele budgettool voor interieur- en verbouwingsprojecten van Drees & Sommer.",
+  "name": "Edwin's Budgettool",
+  "short_name": "Edwin's Budget",
+  "description": "Professionele budgettool voor interieur- en verbouwingsprojecten.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

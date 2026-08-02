@@ -1,4 +1,4 @@
-/* DreSo Budgettool — UI & interactie (vanilla JS, geen build-stap) */
+/* Edwin's Budgettool — UI & interactie (vanilla JS, geen build-stap) */
 
 const App = {
   tab: "dashboard",
