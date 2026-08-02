@@ -6,6 +6,7 @@ const App = {
   unlockedProjects: new Set(), // sessie-only: project-id's die deze sessie zijn ontgrendeld
   unlockError: false,
   visiblePasswords: new Set(), // sessie-only: welke wachtwoorden op tabblad Projecten getoond worden
+  reportLevels: null,          // sessie-only: welke afwerkingsniveaus getoond worden op tabblad Rapport
 
   deferredInstallPrompt: null,
 
@@ -147,6 +148,20 @@ const App = {
         if (confirm(t("confirm.removeLine"))) { Store.removeLine(el.dataset.lineId); this.render(); }
         break;
 
+      case "reset-all-quantities":
+        if (confirm(t("confirm.resetQuantities"))) {
+          Store.resetAllQuantities(Store.activeProject);
+          this.render();
+        }
+        break;
+
+      case "reset-finishing-levels":
+        if (confirm(t("confirm.resetFinishingLevels"))) {
+          Store.resetFinishingLevels();
+          this.render();
+        }
+        break;
+
       case "add-catalog-item": {
         const row = el.closest("tr");
         const subheader = el.dataset.subheader;
@@ -279,11 +294,24 @@ const App = {
         this.render();
         break;
 
-      case "print-report":
+      case "print-report": {
         this.tab = "report";
         this.render();
-        setTimeout(() => window.print(), 80);
+        // laat de browser bij het printen een nette titel tonen (klantnaam) in plaats
+        // van de sitenaam, en zet 'm na afloop weer terug
+        const project = Store.activeProject;
+        const originalTitle = document.title;
+        const restoreTitle = () => {
+          document.title = originalTitle;
+          window.removeEventListener("afterprint", restoreTitle);
+        };
+        window.addEventListener("afterprint", restoreTitle);
+        setTimeout(() => {
+          if (project) document.title = `${project.name} — ${t("report.docLabel")}`;
+          window.print();
+        }, 80);
         break;
+      }
       case "goto-budget":
         this.tab = "budget"; this.render();
         break;
@@ -312,7 +340,18 @@ const App = {
       if (field === "quantity") {
         Store.updateLine(lineId, { quantity: Number(e.target.value) || 0 });
       } else if (field === "unit") {
-        Store.updateLine(lineId, { unit: e.target.value });
+        const raw = e.target.value;
+        if (line.code) {
+          // catalogusregel: alleen lokaal overschrijven als het afwijkt van de standaardeenheid
+          const catalogItem = Store.catalogItem(line.code);
+          if (catalogItem && raw.trim() === catalogItem.unit) {
+            Store.updateLine(lineId, { unitOverride: null });
+          } else {
+            Store.updateLine(lineId, { unitOverride: raw });
+          }
+        } else {
+          Store.updateLine(lineId, { unit: raw });
+        }
       } else if (field === "description") {
         Store.updateLine(lineId, { description: e.target.value });
       } else if (field === "price") {
@@ -336,6 +375,30 @@ const App = {
       const field = e.target.dataset.catalogField;
       const value = field === "price" ? Number(e.target.value) || 0 : e.target.value;
       Store.updateCatalogItem(code, { [field]: value });
+      this.render();
+      return;
+    }
+
+    // percentage van een afwerkingsniveau aanpassen (Eenheidsprijzen tab)
+    if (e.target.matches("[data-finish-field]")) {
+      const level = e.target.dataset.level;
+      const pct = Number(e.target.value) || 0;
+      Store.updateFinishingLevel(level, { factor: 1 + pct / 100 });
+      this.render();
+      return;
+    }
+
+    // welke afwerkingsniveaus getoond worden in het rapport (meerdere mogelijk)
+    if (e.target.matches('[data-action="toggle-report-level"]')) {
+      const level = e.target.dataset.level;
+      if (!this.reportLevels) this.reportLevels = new Set([Store.activeProject.finishingLevel]);
+      if (e.target.checked) {
+        this.reportLevels.add(level);
+      } else if (this.reportLevels.size > 1) {
+        this.reportLevels.delete(level);
+      } else {
+        e.target.checked = true; // minstens één niveau moet geselecteerd blijven
+      }
       this.render();
       return;
     }

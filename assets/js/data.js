@@ -2,10 +2,13 @@
    Overgenomen en opgeschoond uit "aaDreSo Excel Budgettool.xlsx"
    (tabblad "Eenheidsprijzenoverzicht" / "Budget"). */
 
-const FINISHING_LEVELS = {
-  low:    { label: "Low",    suffix: "-5%",  factor: 0.95 },
-  medium: { label: "Medium", suffix: "+0%",  factor: 1.00 },
-  high:   { label: "High",   suffix: "+10%", factor: 1.10 },
+/* Standaardwaarden voor de afwerkingsniveaus. Percentages zijn instelbaar
+   door de gebruiker (zie Store.state.finishingLevels) — dit zijn alleen de
+   fabrieksinstellingen waarnaar "Standaardwaarden herstellen" teruggrijpt. */
+const DEFAULT_FINISHING_LEVELS = {
+  low:    { label: "Low",    factor: 0.95 },
+  medium: { label: "Medium", factor: 1.00 },
+  high:   { label: "High",   factor: 1.10 },
 };
 
 const DEFAULT_CATEGORIES = [

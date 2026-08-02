@@ -59,9 +59,9 @@ function renderDashboard(project) {
           <div class="field" style="flex:2;">
             <label>${t("dash.finishLevelLabel")}</label>
             <div class="finish-toggle">
-              ${Object.entries(FINISHING_LEVELS).map(([key, lvl]) => `
+              ${Object.entries(Store.state.finishingLevels).map(([key, lvl]) => `
                 <div class="finish-opt ${project.finishingLevel === key ? "active" : ""}" data-action="set-finishing" data-level="${key}">
-                  ${finishLabel(key)}<small>${lvl.suffix}</small>
+                  ${finishLabel(key)}<small>${finishSuffix(lvl.factor)}</small>
                 </div>`).join("")}
             </div>
           </div>
@@ -132,10 +132,11 @@ function renderBudget(project) {
       const lineRows = lines.map(line => {
         const catalogItem = Store.catalogItem(line.code);
         const description = catalogItem ? catalogItem.description : line.description;
-        const unit = catalogItem ? catalogItem.unit : line.unit;
+        const unit = Calc.effectiveUnit(line);
         const effectivePrice = Calc.effectiveUnitPrice(line, project);
         const lineTotal = Calc.lineTotal(line, project);
         const isOverride = line.priceOverride != null;
+        const isUnitOverride = line.unitOverride != null;
         return `
           <tr class="item-row">
             <td class="small text-muted">${line.code || "&mdash;"}</td>
@@ -148,9 +149,8 @@ function renderBudget(project) {
               <input class="qty-input" type="number" min="0" step="any" data-line-field="quantity" data-line-id="${line.id}" value="${line.quantity}">
             </td>
             <td class="center">
-              ${catalogItem
-                ? `<span class="unit-badge">${escapeHTML(unit)}</span>`
-                : `<input class="qty-input" style="width:70px" data-line-field="unit" data-line-id="${line.id}" value="${escapeHTML(unit)}">`}
+              <input class="qty-input" style="width:76px" data-line-field="unit" data-line-id="${line.id}" value="${escapeHTML(unit)}">
+              ${isUnitOverride ? `<span class="chip override-chip">${t("budget.chipCustom")}</span>` : ""}
             </td>
             <td class="num">
               <input class="price-input" type="number" min="0" step="any" data-line-field="price" data-line-id="${line.id}" value="${round2(effectivePrice)}">
@@ -197,14 +197,17 @@ function renderBudget(project) {
       </table>`;
   }).join("");
 
+  const activeFinish = Store.state.finishingLevels[project.finishingLevel] || Store.state.finishingLevels.medium;
+
   el.innerHTML = `
     <div class="view-header">
       <div>
         <h1>${t("budget.title", { name: escapeHTML(project.name) })}</h1>
-        <p>${t("budget.description", { level: `${finishLabel(project.finishingLevel)} ${FINISHING_LEVELS[project.finishingLevel].suffix}` })}</p>
+        <p>${t("budget.description", { level: `${finishLabel(project.finishingLevel)} ${finishSuffix(activeFinish.factor)}` })}</p>
       </div>
       <div class="view-actions">
         <button class="btn btn-light" data-action="add-category">${t("budget.addCategory")}</button>
+        <button class="btn btn-danger" data-action="reset-all-quantities">${t("budget.resetQty")}</button>
       </div>
     </div>
     ${catBlocks}
@@ -259,6 +262,14 @@ function renderPrices(filter) {
       </table>`;
   }).join("");
 
+  const finishRows = Object.entries(Store.state.finishingLevels).map(([key, lvl]) => `
+    <div class="field" style="max-width:160px;">
+      <label>${finishLabel(key)}</label>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <input type="number" step="0.5" data-finish-field="pct" data-level="${key}" value="${round2((lvl.factor - 1) * 100)}" style="width:90px;"> <span class="text-muted">%</span>
+      </div>
+    </div>`).join("");
+
   el.innerHTML = `
     <div class="view-header">
       <div>
@@ -270,6 +281,15 @@ function renderPrices(filter) {
         <button class="btn btn-light" data-action="add-category">${t("prices.addCategory")}</button>
       </div>
     </div>
+
+    <div class="panel" style="margin-bottom:22px;">
+      <div class="panel-head"><h2>${t("finishSettings.title")}</h2><span class="hint">${t("finishSettings.hint")}</span></div>
+      <div class="panel-body">
+        <div class="field-row">${finishRows}</div>
+        <button class="btn btn-sm btn-light" style="margin-top:14px;" data-action="reset-finishing-levels">${t("finishSettings.reset")}</button>
+      </div>
+    </div>
+
     ${catBlocks || `<div class="empty-state">${t("prices.noResults", { q: escapeHTML(q) })}</div>`}
   `;
 }
@@ -339,11 +359,15 @@ function renderProjects() {
 }
 
 // ============================================================ RAPPORT
-function renderReport(project) {
-  const el = document.getElementById("view-report");
-  const total = Calc.projectTotal(project);
-  const byCategory = Calc.totalsByCategory(project);
-  const bySubheader = Calc.totalsBySubheader(project);
+
+// bouwt samenvatting + categoriedetails voor één afwerkingsniveau (bij meerdere
+// geselecteerde niveaus wordt dit blok herhaald, elk startend op een nieuwe pagina)
+function buildReportLevelBlock(project, levelKey, showLevelHeading) {
+  const levelProject = Object.assign({}, project, { finishingLevel: levelKey });
+  const total = Calc.projectTotal(levelProject);
+  const byCategory = Calc.totalsByCategory(levelProject);
+  const bySubheader = Calc.totalsBySubheader(levelProject);
+  const lvl = Store.state.finishingLevels[levelKey] || Store.state.finishingLevels.medium;
 
   const catRows = Store.state.categories
     .map(c => ({ code: c.code, name: c.name, value: byCategory[c.code] || 0 }))
@@ -360,7 +384,11 @@ function renderReport(project) {
   // niet de volledige lege catalogus zoals op het Budget-tabblad.
   const filledLines = project.lines.filter(l => Number(l.quantity) > 0);
 
-  const detailSections = Store.state.categories.map((cat, idx) => {
+  const levelBadge = showLevelHeading
+    ? `<div class="level-banner">${t("report.levelHeading", { level: finishLabel(levelKey), pct: finishSuffix(lvl.factor) })}</div>`
+    : "";
+
+  const detailSections = Store.state.categories.map((cat) => {
     const subheaders = Store.subheadersFor(cat.code);
     const hasLines = filledLines.some(l => {
       const sh = Store.state.subheaders.find(s => s.code === l.subheader);
@@ -375,14 +403,14 @@ function renderReport(project) {
       const rows = lines.map(l => {
         const catalogItem = Store.catalogItem(l.code);
         const description = catalogItem ? catalogItem.description : l.description;
-        const unit = catalogItem ? catalogItem.unit : l.unit;
+        const unit = Calc.effectiveUnit(l);
         return `
         <tr>
           <td>${l.code || ""}</td>
           <td>${escapeHTML(description)}</td>
           <td class="num">${fmtNum(l.quantity)} ${escapeHTML(unit)}</td>
-          <td class="num">${fmtEUR2(Calc.effectiveUnitPrice(l, project))}</td>
-          <td class="num">${fmtEUR2(Calc.lineTotal(l, project))}</td>
+          <td class="num">${fmtEUR2(Calc.effectiveUnitPrice(l, levelProject))}</td>
+          <td class="num">${fmtEUR2(Calc.lineTotal(l, levelProject))}</td>
         </tr>`;
       }).join("");
       return `
@@ -394,10 +422,7 @@ function renderReport(project) {
 
     return `
       <div class="report-section">
-        <div class="report-header-row">
-          <div><div class="rh-name">${escapeHTML(project.name)}</div>${t("report.pricesExclVat")}</div>
-          <div style="text-align:right;">${fmtNum(project.floorArea)} m²<br>${project.projectDate}<br>${escapeHTML(project.preparedBy || "")}</div>
-        </div>
+        ${reportHeaderRow(project, levelBadge)}
         <div class="rep-cat-band">${cat.code} &middot; ${escapeHTML(cat.name).toUpperCase()}</div>
         <table class="rep-table" style="width:100%; margin-top:8px;">
           <thead><tr><th>${t("report.repColCode")}</th><th>${t("report.repColDescription")}</th><th class="num">${t("report.repColQty")}</th><th class="num">${t("report.repColUnitPrice")}</th><th class="num">${t("report.repColTotal")}</th></tr></thead>
@@ -407,10 +432,70 @@ function renderReport(project) {
       </div>`;
   }).join("");
 
+  const summaryBlock = `
+    <div class="report-section report-summary-page">
+      ${reportHeaderRow(project, levelBadge)}
+      <h2 class="report-h2">${t("report.summary")}</h2>
+      <div class="summary-narrow">
+        <div class="grid grid-3" style="margin-bottom:18px;">
+          <div class="kpi"><div class="label">${t("report.kpiTarget")}</div><div class="value">${fmtEUR(project.targetBudget)}</div></div>
+          <div class="kpi"><div class="label">${t("report.kpiExpenses")}</div><div class="value">${fmtEUR(total)}</div></div>
+          <div class="kpi ${project.targetBudget - total >= 0 ? "good" : "bad"}"><div class="label">${project.targetBudget - total >= 0 ? t("report.kpiRemaining") : t("report.kpiOverrun")}</div><div class="value">${fmtEUR(Math.abs(project.targetBudget - total))}</div></div>
+        </div>
+        <table class="rep-table summary-table" style="width:100%;">
+          <thead><tr><th>${t("report.colCategory")}</th><th class="num">${t("report.colPercent")}</th><th class="num">${t("report.colAmount")}</th></tr></thead>
+          <tbody>
+            ${summaryRows}
+            <tr class="rep-cat-total-row"><td>${t("report.colTotal")}</td><td class="num">100%</td><td class="num">${fmtEUR(total)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+
+  return summaryBlock + detailSections;
+}
+
+// visueel aantrekkelijke koptekst bovenaan elke rapportpagina — noemt de klant (projectnaam),
+// niet de sitenaam
+function reportHeaderRow(project, extraBadge) {
+  return `
+    <div class="report-header-row">
+      <div>
+        <div class="rh-name">${escapeHTML(project.name)}</div>
+        <div class="rh-sub">${t("report.docLabel")} &middot; ${t("report.pricesExclVat")}</div>
+      </div>
+      <div class="rh-meta">${fmtNum(project.floorArea)} m² &middot; ${project.projectDate}${project.preparedBy ? " &middot; " + escapeHTML(project.preparedBy) : ""}</div>
+    </div>
+    ${extraBadge || ""}`;
+}
+
+function renderReport(project) {
+  const el = document.getElementById("view-report");
+
+  // sessie-selectie welke afwerkingsniveaus getoond worden; standaard het huidige niveau van het project
+  if (!App.reportLevels || !App.reportLevels.size) {
+    App.reportLevels = new Set([project.finishingLevel]);
+  }
+  const levelOrder = Object.keys(Store.state.finishingLevels);
+  const selectedLevels = levelOrder.filter(k => App.reportLevels.has(k));
+  const showLevelHeadings = selectedLevels.length > 1;
+
+  const levelPicker = levelOrder.map(key => {
+    const lvl = Store.state.finishingLevels[key];
+    const checked = App.reportLevels.has(key);
+    return `
+      <label class="finish-opt ${checked ? "active" : ""}" style="cursor:pointer; display:inline-flex; align-items:center; gap:7px; flex:none; padding:8px 14px;">
+        <input type="checkbox" data-action="toggle-report-level" data-level="${key}" ${checked ? "checked" : ""} style="margin:0;">
+        ${finishLabel(key)}<small>${finishSuffix(lvl.factor)}</small>
+      </label>`;
+  }).join("");
+
   const logoScale = project.logoScale || 1;
   const logoOffX = project.logoOffsetX || 0;
   const logoOffY = project.logoOffsetY || 0;
   const logoTransform = `translate(${logoOffX}px, ${logoOffY}px) scale(${logoScale})`;
+
+  const levelBlocks = selectedLevels.map(key => buildReportLevelBlock(project, key, showLevelHeadings)).join("");
 
   el.innerHTML = `
     <div class="panel no-print" style="margin-bottom:16px;">
@@ -432,10 +517,18 @@ function renderReport(project) {
         <p class="small text-muted" style="width:100%; margin:0;">${t("report.dragHint")}</p>` : ""}
       </div>
     </div>
+
+    <div class="panel no-print" style="margin-bottom:16px;">
+      <div class="panel-head"><h2>${t("report.levelsLabel")}</h2><span class="hint">${t("report.levelsHint")}</span></div>
+      <div class="panel-body" style="display:flex; gap:10px; flex-wrap:wrap;">${levelPicker}</div>
+    </div>
+
     <div class="report-toolbar no-print">
       <button class="btn btn-light" data-action="goto-budget">${t("report.backToBudget")}</button>
       <button class="btn btn-primary" data-action="print-report">${t("report.print")}</button>
     </div>
+    <p class="small text-muted no-print" style="margin:-8px 0 16px; text-align:right;">${t("report.printHint")}</p>
+
     <div id="report">
       <div class="report-cover">
         <div class="cover-ruler"></div>
@@ -450,7 +543,7 @@ function renderReport(project) {
 
         <div class="cover-logo-zone">
           ${project.logoDataUrl
-            ? `<img id="coverLogoImg" src="${project.logoDataUrl}" alt="Logo" style="transform:${logoTransform};">`
+            ? `<img id="coverLogoImg" src="${project.logoDataUrl}" alt="Logo" draggable="false" style="transform:${logoTransform};">`
             : `<div class="cover-logo-empty">${t("report.logoPlaceholder")}</div>`}
         </div>
 
@@ -469,45 +562,38 @@ function renderReport(project) {
         </div>
       </div>
 
-      <div class="report-section">
-        <div class="report-header-row">
-          <div><div class="rh-name">${escapeHTML(project.name)}</div>${t("report.pricesExclVat")}</div>
-          <div style="text-align:right;">${fmtNum(project.floorArea)} m²<br>${project.projectDate}<br>${escapeHTML(project.preparedBy || "")}</div>
-        </div>
-        <h2 class="report-h2">${t("report.summary")}</h2>
-        <div class="grid grid-3" style="margin-bottom:22px;">
-          <div class="kpi"><div class="label">${t("report.kpiTarget")}</div><div class="value">${fmtEUR(project.targetBudget)}</div></div>
-          <div class="kpi"><div class="label">${t("report.kpiExpenses")}</div><div class="value">${fmtEUR(total)}</div></div>
-          <div class="kpi ${project.targetBudget - total >= 0 ? "good" : "bad"}"><div class="label">${project.targetBudget - total >= 0 ? t("report.kpiRemaining") : t("report.kpiOverrun")}</div><div class="value">${fmtEUR(Math.abs(project.targetBudget - total))}</div></div>
-        </div>
-        <table class="rep-table summary-table" style="width:100%;">
-          <thead><tr><th>${t("report.colCategory")}</th><th class="num">${t("report.colPercent")}</th><th class="num">${t("report.colAmount")}</th></tr></thead>
-          <tbody>
-            ${summaryRows}
-            <tr class="rep-cat-total-row"><td>${t("report.colTotal")}</td><td class="num">100%</td><td class="num">${fmtEUR(total)}</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      ${detailSections}
+      ${levelBlocks}
     </div>
   `;
 
   bindCoverLogoDrag();
 }
 
-// sleepbaar maken van het covers-logo (grootte via de slider hierboven, positie via drag)
+// sleepbaar maken van het covers-logo (grootte via de slider hierboven, positie via drag).
+// draggable="false" + user-drag:none (CSS) voorkomen dat de browser zijn eigen
+// native afbeelding-drag start, wat het logo tijdens het slepen kon doen "verdwijnen".
 function bindCoverLogoDrag() {
   const img = document.getElementById("coverLogoImg");
-  if (!img) return;
+  const zone = document.querySelector(".cover-logo-zone");
+  if (!img || !zone) return;
   let dragging = false;
   let startX = 0, startY = 0, startOffX = 0, startOffY = 0;
 
-  const applyTransform = (offX, offY) => {
-    const scale = (Store.activeProject.logoScale || 1);
-    img.style.transform = `translate(${offX}px, ${offY}px) scale(${scale})`;
+  const clamp = (offX, offY) => {
+    const zoneRect = zone.getBoundingClientRect();
+    const maxX = zoneRect.width * 0.9;
+    const maxY = zoneRect.height * 0.9;
+    return [Math.max(-maxX, Math.min(maxX, offX)), Math.max(-maxY, Math.min(maxY, offY))];
   };
 
+  const applyTransform = (offX, offY) => {
+    const [x, y] = clamp(offX, offY);
+    const scale = (Store.activeProject.logoScale || 1);
+    img.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+    return [x, y];
+  };
+
+  img.addEventListener("dragstart", (e) => e.preventDefault());
   img.addEventListener("pointerdown", (e) => {
     dragging = true;
     img.setPointerCapture(e.pointerId);
@@ -525,10 +611,8 @@ function bindCoverLogoDrag() {
     if (!dragging) return;
     dragging = false;
     img.classList.remove("dragging");
-    Store.updateActiveProject({
-      logoOffsetX: startOffX + (e.clientX - startX),
-      logoOffsetY: startOffY + (e.clientY - startY),
-    });
+    const [x, y] = applyTransform(startOffX + (e.clientX - startX), startOffY + (e.clientY - startY));
+    Store.updateActiveProject({ logoOffsetX: x, logoOffsetY: y });
   };
   img.addEventListener("pointerup", endDrag);
   img.addEventListener("pointercancel", endDrag);

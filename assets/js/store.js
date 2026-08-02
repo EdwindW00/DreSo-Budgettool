@@ -6,7 +6,14 @@ const LS_KEYS = {
   catalog:    "dreso.catalog.v1",
   projects:   "dreso.projects.v1",
   activeId:   "dreso.activeProject.v1",
+  finishingLevels: "dreso.finishingLevels.v1",
 };
+
+// zet een factor (bv. 0.95) om naar een leesbaar percentage (bv. "-5%")
+function finishSuffix(factor) {
+  const pct = Math.round((Number(factor) - 1) * 1000) / 10;
+  return `${pct > 0 ? "+" : ""}${pct}%`;
+}
 
 function uid(prefix) {
   return (prefix ? prefix + "_" : "") + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
@@ -35,6 +42,7 @@ const Store = {
     catalog: [],
     projects: {},
     activeId: null,
+    finishingLevels: {},
   },
 
   init() {
@@ -43,6 +51,7 @@ const Store = {
     this.state.catalog    = loadJSON(LS_KEYS.catalog, null)    || structuredClone(DEFAULT_CATALOG);
     this.state.projects   = loadJSON(LS_KEYS.projects, null)   || {};
     this.state.activeId   = loadJSON(LS_KEYS.activeId, null);
+    this.state.finishingLevels = loadJSON(LS_KEYS.finishingLevels, null) || structuredClone(DEFAULT_FINISHING_LEVELS);
 
     if (Object.keys(this.state.projects).length === 0) {
       const p = this.createProject("Nieuw project");
@@ -60,6 +69,20 @@ const Store = {
     saveJSON(LS_KEYS.catalog, this.state.catalog);
     saveJSON(LS_KEYS.projects, this.state.projects);
     saveJSON(LS_KEYS.activeId, this.state.activeId);
+    saveJSON(LS_KEYS.finishingLevels, this.state.finishingLevels);
+  },
+
+  // ---------- afwerkingsniveaus ----------
+  updateFinishingLevel(key, patch) {
+    const lvl = this.state.finishingLevels[key];
+    if (!lvl) return;
+    Object.assign(lvl, patch);
+    this.persistAll();
+  },
+
+  resetFinishingLevels() {
+    this.state.finishingLevels = structuredClone(DEFAULT_FINISHING_LEVELS);
+    this.persistAll();
   },
 
   // ---------- projecten ----------
@@ -193,6 +216,12 @@ const Store = {
     this.persistAll();
   },
 
+  resetAllQuantities(project) {
+    if (!project) return;
+    project.lines.forEach(l => { l.quantity = 0; });
+    this.persistAll();
+  },
+
   // ---------- catalogus (eenheidsprijzen) ----------
   addCatalogItem(item) {
     this.state.catalog.push({
@@ -312,7 +341,8 @@ const Store = {
 // ---------- berekeningen ----------
 const Calc = {
   finishingFactor(level) {
-    return (FINISHING_LEVELS[level] || FINISHING_LEVELS.medium).factor;
+    const levels = Store.state.finishingLevels;
+    return (levels[level] || levels.medium || DEFAULT_FINISHING_LEVELS.medium).factor;
   },
 
   effectiveUnitPrice(line, project) {
@@ -322,6 +352,13 @@ const Calc = {
     const catalogItem = Store.catalogItem(line.code);
     const base = catalogItem ? catalogItem.price : 0;
     return base * Calc.finishingFactor(project.finishingLevel);
+  },
+
+  // eenheid: standaard uit de catalogus, tenzij lokaal overschreven (project-specifiek)
+  effectiveUnit(line) {
+    if (line.unitOverride != null && line.unitOverride !== "") return line.unitOverride;
+    const catalogItem = Store.catalogItem(line.code);
+    return catalogItem ? catalogItem.unit : line.unit;
   },
 
   lineTotal(line, project) {
