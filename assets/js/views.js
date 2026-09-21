@@ -13,6 +13,14 @@ function quantitySourceSelect(item) {
   return `<select data-catalog-field="quantitySource" data-code="${item.code}" style="width:100%;">${options.join("")}</select>`;
 }
 
+// wijst in het rapport een doorlopend, gatenvrij nummer toe binnen een subcategorie
+// (1.01.01, 1.01.02, 1.01.03, …) — ook aan handmatig toegevoegde regels, en ongeacht
+// welke catalogusregels toevallig verborgen zijn omdat hun aantal 0 is.
+function reportCodeFor(subheaderCode, index) {
+  const prefix = subheaderCode.replace(/^0/, "");
+  return `${prefix}.${String(index + 1).padStart(2, "0")}`;
+}
+
 // ============================================================ DASHBOARD
 function renderDashboard(project) {
   // vloeroppervlak/werkplekken/headcount direct verwerken in gekoppelde budgetregels
@@ -432,6 +440,8 @@ function buildReportLevelBlock(project, levelKey, showLevelHeading) {
   const byCategory = Calc.totalsByCategory(levelProject);
   const bySubheader = Calc.totalsBySubheader(levelProject);
   const lvl = Store.state.finishingLevels[levelKey] || Store.state.finishingLevels.medium;
+  const vatOn = !!project.vatEnabled;
+  const vatOf = (amount) => Calc.vatAmount(amount, project);
 
   const catRows = Store.state.categories
     .map(c => ({ code: c.code, name: c.name, value: byCategory[c.code] || 0 }))
@@ -442,6 +452,7 @@ function buildReportLevelBlock(project, levelKey, showLevelHeading) {
       <td>${i + 1}. ${escapeHTML(r.name)}</td>
       <td class="num">${fmtPct(total ? r.value / total : 0)}</td>
       <td class="num">${fmtEUR(r.value)}</td>
+      ${vatOn ? `<td class="num">${fmtEUR(vatOf(r.value))}</td>` : ""}
     </tr>`).join("");
 
   // in het rapport tonen we alleen daadwerkelijk ingevulde regels (aantal > 0),
@@ -461,28 +472,33 @@ function buildReportLevelBlock(project, levelKey, showLevelHeading) {
     if (!hasLines) return "";
 
     const subTables = subheaders.map(sub => {
+      // volgorde: catalogusregels (in catalogusvolgorde) gevolgd door handmatig
+      // toegevoegde regels, zoals ze ook op het Budget-tabblad verschijnen —
+      // daarna doorlopend hernummerd zodat er nooit gaten in de nummering zitten.
       const lines = filledLines.filter(l => l.subheader === sub.code);
       if (!lines.length) return "";
       const subTotal = bySubheader[sub.code] || 0;
-      const rows = lines.map(l => {
+      const rows = lines.map((l, idx) => {
         const catalogItem = Store.catalogItem(l.code);
         const description = catalogItem ? catalogItem.description : l.description;
         const unit = Calc.effectiveUnit(l);
         const comment = (l.comment || "").trim();
+        const lineTotal = Calc.lineTotal(l, levelProject);
         return `
         <tr>
-          <td>${l.code || ""}</td>
+          <td>${reportCodeFor(sub.code, idx)}</td>
           <td>${escapeHTML(description)}</td>
           <td class="num">${fmtNum(l.quantity)} ${escapeHTML(unit)}</td>
           <td class="num">${fmtEUR2(Calc.effectiveUnitPrice(l, levelProject))}</td>
-          <td class="num">${fmtEUR2(Calc.lineTotal(l, levelProject))}</td>
+          <td class="num">${fmtEUR2(lineTotal)}</td>
+          ${vatOn ? `<td class="num">${fmtEUR2(vatOf(lineTotal))}</td>` : ""}
         </tr>
-        ${comment ? `<tr class="rep-comment-row"><td></td><td colspan="4"><span class="rep-comment-label">${t("report.commentLabel")}:</span> ${escapeHTML(comment)}</td></tr>` : ""}`;
+        ${comment ? `<tr class="rep-comment-row"><td></td><td colspan="${vatOn ? 5 : 4}"><span class="rep-comment-label">${t("report.commentLabel")}:</span> ${escapeHTML(comment)}</td></tr>` : ""}`;
       }).join("");
       return `
         <table class="rep-table" style="width:100%; margin-bottom:10px;">
-          <thead><tr><th colspan="5" style="color:var(--navy-800); font-weight:800; font-size:11.5px; border-bottom:1px solid var(--line); padding-top:10px;">${sub.code} ${escapeHTML(sub.name)}</th></tr></thead>
-          <tbody>${rows}<tr class="rep-sub-row"><td colspan="4">${t("report.subtotal")}</td><td class="num">${fmtEUR2(subTotal)}</td></tr></tbody>
+          <thead><tr><th colspan="${vatOn ? 6 : 5}" style="color:var(--navy-800); font-weight:800; font-size:11.5px; border-bottom:1px solid var(--line); padding-top:10px;">${sub.code} ${escapeHTML(sub.name)}</th></tr></thead>
+          <tbody>${rows}<tr class="rep-sub-row"><td colspan="4">${t("report.subtotal")}</td><td class="num">${fmtEUR2(subTotal)}</td>${vatOn ? `<td class="num">${fmtEUR2(vatOf(subTotal))}</td>` : ""}</tr></tbody>
         </table>`;
     }).join("");
 
@@ -491,10 +507,10 @@ function buildReportLevelBlock(project, levelKey, showLevelHeading) {
         ${reportHeaderRow(project, levelBadge)}
         <div class="rep-cat-band">${cat.code} &middot; ${escapeHTML(cat.name).toUpperCase()}</div>
         <table class="rep-table" style="width:100%; margin-top:8px;">
-          <thead><tr><th>${t("report.repColCode")}</th><th>${t("report.repColDescription")}</th><th class="num">${t("report.repColQty")}</th><th class="num">${t("report.repColUnitPrice")}</th><th class="num">${t("report.repColTotal")}</th></tr></thead>
+          <thead><tr><th>${t("report.repColCode")}</th><th>${t("report.repColDescription")}</th><th class="num">${t("report.repColQty")}</th><th class="num">${t("report.repColUnitPrice")}</th><th class="num">${t("report.repColTotal")}</th>${vatOn ? `<th class="num">${t("report.colVat")}</th>` : ""}</tr></thead>
         </table>
         ${subTables}
-        <table class="rep-table" style="width:100%;"><tbody><tr class="rep-cat-total-row"><td colspan="4">${t("report.categoryTotal", { cat: cat.code })}</td><td class="num">${fmtEUR2(byCategory[cat.code] || 0)}</td></tr></tbody></table>
+        <table class="rep-table" style="width:100%;"><tbody><tr class="rep-cat-total-row"><td colspan="4">${t("report.categoryTotal", { cat: cat.code })}</td><td class="num">${fmtEUR2(byCategory[cat.code] || 0)}</td>${vatOn ? `<td class="num">${fmtEUR2(vatOf(byCategory[cat.code] || 0))}</td>` : ""}</tr></tbody></table>
       </div>`;
   }).join("");
 
@@ -515,17 +531,41 @@ function buildReportLevelBlock(project, levelKey, showLevelHeading) {
         <div style="display:flex; gap:18px; align-items:center;">
           ${pieChart ? `<div style="flex:none;">${pieChart}</div>` : ""}
           <table class="rep-table summary-table" style="width:100%; flex:1;">
-            <thead><tr><th>${t("report.colCategory")}</th><th class="num">${t("report.colPercent")}</th><th class="num">${t("report.colAmount")}</th></tr></thead>
+            <thead><tr><th>${t("report.colCategory")}</th><th class="num">${t("report.colPercent")}</th><th class="num">${t("report.colAmount")}</th>${vatOn ? `<th class="num">${t("report.colVat")}</th>` : ""}</tr></thead>
             <tbody>
               ${summaryRows}
-              <tr class="rep-cat-total-row"><td>${t("report.colTotal")}</td><td class="num">100%</td><td class="num">${fmtEUR(total)}</td></tr>
+              <tr class="rep-cat-total-row"><td>${t("report.colTotal")}</td><td class="num">100%</td><td class="num">${fmtEUR(total)}</td>${vatOn ? `<td class="num">${fmtEUR(vatOf(total))}</td>` : ""}</tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>`;
 
-  return summaryBlock + detailSections;
+  // slotopsomming: alle subtotalen (per categorie) nogmaals op een rij, tot het eindtotaal
+  const finalRows = catRows.map(r => `
+    <tr>
+      <td>${escapeHTML(r.code)} &middot; ${escapeHTML(r.name)}</td>
+      <td class="num">${fmtEUR2(r.value)}</td>
+      ${vatOn ? `<td class="num">${fmtEUR2(vatOf(r.value))}</td>` : ""}
+    </tr>`).join("");
+
+  const finalOverviewBlock = `
+    <div class="report-section">
+      ${reportHeaderRow(project, levelBadge)}
+      <h2 class="report-h2">${t("report.finalOverviewTitle")}</h2>
+      <div class="summary-narrow">
+        <table class="rep-table summary-table" style="width:100%;">
+          <thead><tr><th>${t("report.colCategory")}</th><th class="num">${t("report.colAmount")}</th>${vatOn ? `<th class="num">${t("report.colVat")}</th>` : ""}</tr></thead>
+          <tbody>
+            ${finalRows}
+            <tr class="rep-cat-total-row"><td>${t("report.colTotal")}</td><td class="num">${fmtEUR2(total)}</td>${vatOn ? `<td class="num">${fmtEUR2(vatOf(total))}</td>` : ""}</tr>
+            ${vatOn ? `<tr class="rep-cat-total-row" style="border-top:2px solid var(--navy-900);"><td>${t("report.totalInclVat")}</td><td class="num" colspan="2">${fmtEUR2(total + vatOf(total))}</td></tr>` : ""}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+
+  return summaryBlock + detailSections + finalOverviewBlock;
 }
 
 // visueel aantrekkelijke koptekst bovenaan elke rapportpagina — noemt de klant (projectnaam),
@@ -535,7 +575,7 @@ function reportHeaderRow(project, extraBadge) {
     <div class="report-header-row">
       <div>
         <div class="rh-name">${escapeHTML(project.name)}</div>
-        <div class="rh-sub">${t("report.docLabel")} &middot; ${t("report.pricesExclVat")}</div>
+        <div class="rh-sub">${t("report.docLabel")}${project.vatEnabled ? "" : " &middot; " + t("report.pricesExclVat")}</div>
       </div>
       <div class="rh-meta">${fmtNum(project.floorArea)} m² &middot; ${project.projectDate}${project.preparedBy ? " &middot; " + escapeHTML(project.preparedBy) : ""}</div>
     </div>
@@ -597,6 +637,22 @@ function renderReport(project) {
     <div class="panel no-print" style="margin-bottom:16px;">
       <div class="panel-head"><h2>${t("report.levelsLabel")}</h2><span class="hint">${t("report.levelsHint")}</span></div>
       <div class="panel-body" style="display:flex; gap:10px; flex-wrap:wrap;">${levelPicker}</div>
+    </div>
+
+    <div class="panel no-print" style="margin-bottom:16px;">
+      <div class="panel-body" style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; font-size:13.5px;">
+          <input type="checkbox" data-project-field="vatEnabled" ${project.vatEnabled ? "checked" : ""}>
+          ${t("report.vatLabel")}
+        </label>
+        ${project.vatEnabled ? `
+        <div class="field" style="max-width:160px; margin:0;">
+          <label>${t("report.vatRateLabel")}</label>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <input type="number" min="0" step="0.5" data-project-field="vatRate" value="${project.vatRate}" style="width:90px;"> <span class="text-muted">%</span>
+          </div>
+        </div>` : ""}
+      </div>
     </div>
 
     <div class="report-toolbar no-print">

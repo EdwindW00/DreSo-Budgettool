@@ -332,8 +332,11 @@ const App = {
     // project meta fields
     if (e.target.matches("[data-project-field]")) {
       const field = e.target.dataset.projectField;
-      let value = e.target.value;
-      if (["floorArea", "targetBudget"].includes(field)) value = Number(value) || 0;
+      const numericFields = ["floorArea", "targetBudget", "workplaces", "headcount", "meetingRooms", "meetingSeats", "vatRate"];
+      let value;
+      if (e.target.type === "checkbox") value = e.target.checked;
+      else if (numericFields.includes(field)) value = Number(e.target.value) || 0;
+      else value = e.target.value;
       Store.updateActiveProject({ [field]: value });
       this.render();
       return;

@@ -100,6 +100,8 @@ const Store = {
       preparedBy: "",
       targetBudget: 0,
       finishingLevel: "medium",
+      vatEnabled: false,
+      vatRate: 21,
       notes: "",
       password: (opts && opts.password) || "",
       logoDataUrl: (opts && opts.logoDataUrl) || null,
@@ -411,6 +413,10 @@ const Calc = {
   perUnit(amount, count) {
     const c = Number(count) || 0;
     return c > 0 ? amount / c : null;
+  },
+
+  vatAmount(amount, project) {
+    return (Number(amount) || 0) * ((Number(project.vatRate) || 0) / 100);
   },
 
   totalsBySubheader(project) {

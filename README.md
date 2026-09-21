@@ -46,8 +46,13 @@ succesvolle deploy is de tool bereikbaar op:
 - **Dashboard** met doelbudget vs. begrote uitgaven, resterend budget en verdeling per
   categorie (donutchart + staafdiagram).
 - **Rapport** in een representatieve, professionele lay-out (cover met projectlogo,
-  samenvatting met taartdiagram, detailtabellen per categorie inclusief opmerkingen) —
-  met één klik te printen of als PDF op te slaan.
+  samenvatting met taartdiagram, detailtabellen per categorie inclusief opmerkingen,
+  en een slotoverzicht van alle categorie-subtotalen tot het eindtotaal) — met één klik
+  te printen of als PDF op te slaan. Regelnummering (bv. 1.01.01, 1.01.02, …) is in het
+  rapport altijd doorlopend en gatenvrij, ook voor handmatig toegevoegde regels.
+- **BTW optioneel toevoegen aan het rapport**: vinkje op het tabblad Rapport, met zelf
+  instelbaar percentage (standaard 21%). Voegt een BTW-kolom toe aan de detail-, samenvattings-
+  en slottabellen en laat de tekst "alle prijzen excl. btw" vervallen.
 - **Logo / afbeelding per project**: te uploaden bij het aanmaken van een project of
   later via het tabblad Rapport; verschijnt op de coverpagina van het rapport.
 - **Projectwachtwoord**: elk nieuw project vraagt een verplicht wachtwoord dat
